@@ -19,8 +19,8 @@ AI 面试教练平台：学习 → 练习 → 模拟面试 → 自动评分 → 
 
 ```bash
 # 后端（默认 SQLite；LOCAL_MODE=true 免登录单机模式；MOCK_AI=true 无需任何 API key）
-cd services/api && python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && python -m app.seed
+cd services/api && python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && python3 -m app.seed
 LOCAL_MODE=true SANDBOX_MODE=subprocess uvicorn app.main:app --reload --port 8000
 
 # 前端（另开终端）

@@ -56,9 +56,10 @@ DeepSeek/Kimi 走 OpenAI 兼容接口；Claude 走官方 `anthropic` SDK。
 
 ```bash
 cd services/api
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
+# Windows: python -m venv .venv 然后 .venv\Scripts\activate
 pip install -r requirements.txt
-python -m app.seed          # 建表 + 导入知识点/题库/Quiz
+python3 -m app.seed         # 建表 + 导入知识点/题库/Quiz
 uvicorn app.main:app --reload --port 8000
 ```
 
