@@ -31,7 +31,20 @@ RETRY_PROMPT = (
 
 
 class AgentError(RuntimeError):
-    pass
+    """LLM provider call failed; message is safe to surface to the user."""
+
+
+def _friendly_provider_error(exc: Exception, provider: str) -> "AgentError":
+    text = str(exc)
+    if "insufficient_quota" in text or "exceeded your current quota" in text:
+        return AgentError(
+            f"你的 {provider} 账户余额不足（insufficient_quota）。请到该平台充值，"
+            f"或改用其他 LLM_PROVIDER。")
+    if "invalid_api_key" in text or "Incorrect API key" in text or "authentication" in text.lower():
+        return AgentError(f"{provider} API key 无效，请检查 LLM_API_KEY 配置。")
+    if "rate_limit" in text or "429" in text:
+        return AgentError(f"{provider} 请求频率超限，请稍后重试。")
+    return AgentError(f"{provider} 调用失败：{text[:300]}")
 
 
 def _parse(raw: str, schema: type[T]) -> T:
@@ -63,14 +76,19 @@ def _complete_openai_compatible(system: str, messages: list[dict], schema: type[
     client = OpenAI(api_key=settings.resolved_api_key, base_url=settings.resolved_base_url)
     chat = [{"role": "system", "content": system}, *messages]
 
+    from openai import OpenAIError
+
     last_error: Exception | None = None
     for attempt in range(2):
-        response = client.chat.completions.create(
-            model=settings.resolved_model,
-            messages=chat,
-            response_format={"type": "json_object"},
-            temperature=0.4,
-        )
+        try:
+            response = client.chat.completions.create(
+                model=settings.resolved_model,
+                messages=chat,
+                response_format={"type": "json_object"},
+                temperature=0.4,
+            )
+        except OpenAIError as exc:
+            raise _friendly_provider_error(exc, settings.llm_provider) from exc
         raw = response.choices[0].message.content or "{}"
         try:
             return _parse(raw, schema)
@@ -96,12 +114,15 @@ def _complete_anthropic(system: str, messages: list[dict], schema: type[T]) -> T
 
     last_error: Exception | None = None
     for attempt in range(2):
-        response = client.messages.create(
-            model=settings.resolved_model,
-            max_tokens=16000,
-            system=system,
-            messages=chat,
-        )
+        try:
+            response = client.messages.create(
+                model=settings.resolved_model,
+                max_tokens=16000,
+                system=system,
+                messages=chat,
+            )
+        except anthropic.AnthropicError as exc:
+            raise _friendly_provider_error(exc, "anthropic") from exc
         if response.stop_reason == "refusal":
             raise AgentError("The model declined this request (stop_reason=refusal).")
         raw = next((b.text for b in response.content if b.type == "text"), "")

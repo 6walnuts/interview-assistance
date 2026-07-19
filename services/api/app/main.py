@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from .agents.llm import AgentError
 from .config import get_settings
 from .db import Base, engine
 from .routers import auth, coach, interviews, plan, profile, progress, quiz, tasks, topics
@@ -30,6 +32,13 @@ for router in (auth.router, profile.router, topics.router, tasks.router,
                interviews.router, progress.router, coach.router,
                quiz.router, plan.router):
     app.include_router(router)
+
+
+@app.exception_handler(AgentError)
+async def agent_error_handler(request: Request, exc: AgentError) -> JSONResponse:
+    # Provider failures (no quota, bad key, rate limit) surface as a readable
+    # message instead of a raw 500 traceback.
+    return JSONResponse(status_code=502, content={"detail": str(exc)})
 
 
 @app.get("/api/health")
