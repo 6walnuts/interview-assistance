@@ -34,6 +34,15 @@ class AgentError(RuntimeError):
     """LLM provider call failed; message is safe to surface to the user."""
 
 
+def _validated_api_key(settings) -> str:
+    key = settings.resolved_api_key.strip()
+    if not key.isascii():
+        raise AgentError(
+            "LLM_API_KEY 含有非 ASCII 字符——多半是复制粘贴时混入了全角字符、"
+            "中文标点或不可见字符。请删掉 .env 中该行，切换到英文输入法后重新粘贴。")
+    return key
+
+
 def _friendly_provider_error(exc: Exception, provider: str) -> "AgentError":
     text = str(exc)
     if "insufficient_quota" in text or "exceeded your current quota" in text:
@@ -73,7 +82,7 @@ def _complete_openai_compatible(system: str, messages: list[dict], schema: type[
     from openai import OpenAI  # lazy import: mock mode needs no SDK
 
     settings = get_settings()
-    client = OpenAI(api_key=settings.resolved_api_key, base_url=settings.resolved_base_url)
+    client = OpenAI(api_key=_validated_api_key(settings), base_url=settings.resolved_base_url)
     chat = [{"role": "system", "content": system}, *messages]
 
     from openai import OpenAIError
@@ -104,7 +113,7 @@ def _complete_anthropic(system: str, messages: list[dict], schema: type[T]) -> T
     import anthropic  # lazy import: only needed for this provider
 
     settings = get_settings()
-    client = anthropic.Anthropic(api_key=settings.resolved_api_key)
+    client = anthropic.Anthropic(api_key=_validated_api_key(settings))
 
     chat = [dict(m) for m in messages]
     # The Messages API requires the first message to be from the user; our
