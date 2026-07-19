@@ -16,30 +16,59 @@ const CATEGORIES = [
   { id: "ai_infrastructure", name: "AI Infrastructure" },
 ];
 
+type ChatMsg = { role: "user" | "coach"; text: string };
+
+const CHATS_KEY = "aic_coach_chats";
+
 export default function LearnPage() {
   const { t: tr } = useI18n();
   const [category, setCategory] = useState("coding");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selected, setSelected] = useState<Topic | null>(null);
-  const [chat, setChat] = useState<{ role: "user" | "coach"; text: string }[]>([]);
+  // Chat history is kept per topic slug so switching topics never loses it.
+  const [chats, setChats] = useState<Record<string, ChatMsg[]>>({});
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const chat = selected ? chats[selected.slug] ?? [] : [];
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CHATS_KEY);
+      if (saved) setChats(JSON.parse(saved));
+    } catch {
+      // Corrupt or unavailable storage — start with empty histories.
+    }
+  }, []);
+
   useEffect(() => {
     api.listTopics(category)
-      .then((t) => { setTopics(t); setSelected(null); setChat([]); })
+      .then((t) => { setTopics(t); setSelected(null); })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
   }, [category]);
 
+  function appendTo(slug: string, msg: ChatMsg) {
+    setChats((all) => {
+      const next = { ...all, [slug]: [...(all[slug] ?? []), msg] };
+      try {
+        localStorage.setItem(CHATS_KEY, JSON.stringify(next));
+      } catch {
+        // Storage full/unavailable — keep the in-memory history anyway.
+      }
+      return next;
+    });
+  }
+
   async function ask(message: string, mode = "explain") {
-    if (!message.trim() || busy) return;
+    if (!message.trim() || busy || !selected) return;
+    const slug = selected.slug;
     setBusy(true);
-    setChat((c) => [...c, { role: "user", text: message }]);
+    appendTo(slug, { role: "user", text: message });
     setInput("");
     try {
-      const resp = await api.coachChat(message, mode, selected?.slug);
-      setChat((c) => [...c, { role: "coach", text: resp.reply }]);
+      const resp = await api.coachChat(message, mode, slug);
+      appendTo(slug, { role: "coach", text: resp.reply });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Coach unavailable");
     } finally {
@@ -64,8 +93,8 @@ export default function LearnPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {topics.map((t) => (
             <div key={t.id} role="button" tabIndex={0}
-              onClick={() => { setSelected(t); setChat([]); }}
-              onKeyDown={(e) => e.key === "Enter" && (setSelected(t), setChat([]))}
+              onClick={() => setSelected(t)}
+              onKeyDown={(e) => e.key === "Enter" && setSelected(t)}
               className={`card cursor-pointer text-left transition ${selected?.id === t.id ? "!border-brand-600" : "hover:border-slate-300"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-medium">{t.name}</p>
