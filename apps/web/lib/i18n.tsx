@@ -128,6 +128,7 @@ const DICT: Record<string, [string, string]> = {
   "Restore my code": ["还原我的代码", "Restaurar mi código"],
   "Insert into editor": ["插入编辑器", "Insertar en el editor"],
   "Ask for a hint on the current exercise": ["就当前练习要一个提示", "Pide una pista sobre el ejercicio actual"],
+  "based on my current code": ["基于我当前的代码", "basada en mi código actual"],
   "Share with tutor": ["发给老师点评", "Compartir con el tutor"],
   "Switch the editor language": ["切换编辑器语言", "Cambiar el lenguaje del editor"],
   "explain": ["讲解", "explicar"],

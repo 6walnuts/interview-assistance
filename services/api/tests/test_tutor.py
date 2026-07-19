@@ -66,6 +66,31 @@ def test_interview_hint_returns_hint_content(client, auth_headers):
     assert "TODO" in based["hint_content"]
 
 
+def test_code_fences_hoisted_from_reply():
+    from app.agents.agent_schemas import CoachReply
+    from app.agents.coach import _hoist_code
+
+    # Model put code in the chat text instead of code_snippet.
+    r = _hoist_code(CoachReply(
+        reply="Here is a frame:\n```python\ndef rag(q):\n    info = retrieve(q)\n    return generate(info)\n```\nContinue from it.",
+        suggested_actions=[],
+    ))
+    assert r.code_snippet.startswith("def rag(q):")
+    assert "```" not in r.reply
+    assert "def rag" not in r.reply  # hoisted block removed from prose
+
+    # Snippet already present: reply fences are just unfenced, snippet kept.
+    r2 = _hoist_code(CoachReply(
+        reply="Note ```x = 1``` inline.", suggested_actions=[], code_snippet="y = 2\n",
+    ))
+    assert r2.code_snippet == "y = 2\n"
+    assert "```" not in r2.reply and "x = 1" in r2.reply
+
+    # No fences: untouched.
+    r3 = _hoist_code(CoachReply(reply="Plain text.", suggested_actions=[]))
+    assert r3.reply == "Plain text." and r3.code_snippet == ""
+
+
 def test_coach_hint_returns_code_snippet(client, auth_headers):
     resp = client.post("/api/coach/chat", json={
         "message": "I'm stuck — give me a hint for this exercise.",

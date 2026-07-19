@@ -54,9 +54,16 @@ export default function TutorPage() {
   const [execution, setExecution] = useState<Execution | null>(null);
   const [running, setRunning] = useState(false);
   const [snippet, setSnippet] = useState<string | null>(null);
+  // Editor contents before a snippet replaced them, so the student can revert.
+  const [preSnippetCode, setPreSnippetCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
+  // Latest editor state for callbacks (ask() identity stays stable).
+  const codeRef = useRef(code);
+  codeRef.current = code;
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   const speaker = useSpeaker(setError);
   const voice = useVoiceInput(
@@ -70,10 +77,11 @@ export default function TutorPage() {
   const callRef = useRef<RealtimeConnection | null>(null);
 
   const ask = useCallback(
-    async (message: string, existing: ChatMsg[]) => {
+    async (message: string, existing: ChatMsg[], displayAs?: string) => {
       setBusy(true);
       setError(null);
-      const withUser: ChatMsg[] = [...existing, { role: "user", text: message }];
+      // displayAs keeps bulky payloads (e.g. attached code) out of the bubble.
+      const withUser: ChatMsg[] = [...existing, { role: "user", text: displayAs ?? message }];
       // The reply streams into a live coach bubble as tokens arrive.
       setChat([...withUser, { role: "coach", text: "" }]);
       setInput("");
@@ -89,7 +97,12 @@ export default function TutorPage() {
           setChat([...withUser, { role: "coach", text: partial }]);
         });
         setChat([...withUser, { role: "coach", text: resp.reply }]);
-        if (resp.code_snippet) setSnippet(resp.code_snippet);
+        if (resp.code_snippet) {
+          // Apply the snippet straight into the editor, keeping a revert point.
+          setSnippet(resp.code_snippet);
+          setPreSnippetCode(codeRef.current);
+          setCode(resp.code_snippet);
+        }
         if (speaker.enabled) speaker.speak(resp.reply);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Tutor unavailable");
@@ -263,7 +276,21 @@ export default function TutorPage() {
                 className="btn-secondary"
                 disabled={busy}
                 title={t("Ask for a hint on the current exercise")}
-                onClick={() => void ask("I'm stuck — give me a hint for the current exercise, with a short code skeleton (not the full answer).", chat)}
+                onClick={() => {
+                  const current = codeRef.current;
+                  const starter = LANGUAGES[langRef.current]?.starter ?? "";
+                  const mine = current.trim() && current !== starter
+                    ? `\n\nMy current code:\n\`\`\`${langRef.current}\n${current}\n\`\`\``
+                    : "";
+                  void ask(
+                    "I'm stuck — give me a hint for the current exercise as a code_snippet "
+                    + "I can continue from (not the full answer)."
+                    + (mine ? " Base it on my code below, keeping my structure." : "")
+                    + mine,
+                    chat,
+                    mine ? `💡 ${t("Hint")} (${t("based on my current code")})` : `💡 ${t("Hint")}`
+                  );
+                }}
               >
                 💡 {t("Hint")}
               </button>
@@ -282,18 +309,23 @@ export default function TutorPage() {
           {snippet && (
             <div className="border-b border-amber-200 bg-amber-50 p-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase text-amber-700">💡 {t("Hint")}</span>
+                <span className="text-xs font-semibold uppercase text-amber-700">
+                  💡 {t("Hint")}<span className="ml-2 font-normal normal-case">{t("(applied to your editor)")}</span>
+                </span>
                 <div className="flex gap-2">
-                  <button
-                    className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-amber-700"
-                    onClick={() => {
-                      const starter = LANGUAGES[lang]?.starter ?? "";
-                      setCode((c) => (c === starter || !c.trim() ? snippet : `${c}\n\n${snippet}`));
-                    }}
-                  >
-                    {t("Insert into editor")}
-                  </button>
-                  <button className="text-xs text-amber-600 hover:text-amber-800" onClick={() => setSnippet(null)}>
+                  {preSnippetCode !== null && (
+                    <button
+                      className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-amber-700"
+                      onClick={() => {
+                        setCode(preSnippetCode);
+                        setPreSnippetCode(null);
+                      }}
+                    >
+                      ↩ {t("Restore my code")}
+                    </button>
+                  )}
+                  <button className="text-xs text-amber-600 hover:text-amber-800"
+                    onClick={() => { setSnippet(null); setPreSnippetCode(null); }}>
                     ✕ {t("Dismiss")}
                   </button>
                 </div>
