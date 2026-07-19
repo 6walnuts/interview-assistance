@@ -8,6 +8,7 @@ import type { Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker } from "@/lib/voice";
 import SpeedSelect from "@/components/SpeedSelect";
+import ResumeUpload from "@/components/ResumeUpload";
 
 type Speaker = "asker" | "answerer" | "user";
 type Turn = { speaker: Speaker; text: string };
@@ -177,6 +178,12 @@ export default function DuoPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {isBQ && (
+            <ResumeUpload
+              onExtract={() => setHasResume(true)}
+              onError={setError}
+            />
+          )}
           <button
             className={`rounded-full border px-3 py-1 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
             onClick={() => speaker.setEnabled(!speaker.enabled)}
@@ -198,9 +205,12 @@ export default function DuoPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-4">
         <div className="flex-1 space-y-3 overflow-y-auto py-4">
           {isBQ && hasResume === false && (
-            <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              {t("No resume on file — the interviewer will ask generic behavioral questions.")}{" "}
-              <Link href="/interviews/new" className="font-medium underline">{t("Paste your resume")}</Link>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+              <span>
+                {t("No resume on file — the interviewer will ask generic behavioral questions.")}{" "}
+                <Link href="/interviews/new" className="font-medium underline">{t("Paste your resume")}</Link>
+              </span>
+              <ResumeUpload onExtract={() => setHasResume(true)} onError={setError} />
             </div>
           )}
           {turns.length === 0 && (
