@@ -120,9 +120,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ code, language, label }),
     }),
-  endInterview: (id: string) =>
-    request<{ report_id: string; review_task_count: number }>(`/api/interviews/${id}/end`, {
+  endInterview: (id: string, generateReport = true) =>
+    request<{ report_id: string | null; review_task_count: number }>(`/api/interviews/${id}/end`, {
       method: "POST",
+      body: JSON.stringify({ generate_report: generateReport }),
     }),
   getReport: (id: string) => request<Report>(`/api/interviews/${id}/report`),
 

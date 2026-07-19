@@ -162,8 +162,10 @@ const DICT: Record<string, [string, string]> = {
   "Design whiteboard (plain text / markdown)": ["设计白板（纯文本 / Markdown）", "Pizarra de diseño (texto / markdown)"],
   "Share design with interviewer": ["把设计发给面试官", "Compartir diseño con el entrevistador"],
   "Loading interview…": ["加载面试中…", "Cargando entrevista…"],
-  "End the interview and generate your report?":
-    ["结束面试并生成报告？", "¿Terminar la entrevista y generar tu informe?"],
+  "End the interview?": ["确定要结束面试吗？", "¿Terminar la entrevista?"],
+  "Generate your scoring report now? Choose Cancel to end without a report — you can generate it later from the report page.":
+    ["现在生成评分报告吗？选择“取消”则只结束面试，之后可以在报告页随时生成。",
+     "¿Generar tu informe de evaluación ahora? Elige Cancelar para terminar sin informe: podrás generarlo después desde la página del informe."],
 
   // Report page
   "Interview report": ["面试报告", "Informe de entrevista"],
@@ -182,6 +184,11 @@ const DICT: Record<string, [string, string]> = {
   "Your auto-generated study plan": ["自动生成的学习计划", "Tu plan de estudio generado automáticamente"],
   "No tasks generated for this session.": ["本场面试未生成任务。", "No se generaron tareas para esta sesión."],
   "Generating report…": ["报告生成中…", "Generando informe…"],
+  "No report yet": ["还没有报告", "Aún no hay informe"],
+  "This interview ended without scoring. Generate the report now to get your scores and study plan.":
+    ["这场面试结束时没有评分。现在生成报告即可获得评分和学习计划。",
+     "Esta entrevista terminó sin evaluación. Genera el informe ahora para obtener tu puntuación y plan de estudio."],
+  "Generate report": ["生成报告", "Generar informe"],
 
   // Quiz page
   "Chapter quiz": ["章节测试", "Quiz del capítulo"],

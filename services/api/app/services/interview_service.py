@@ -128,14 +128,27 @@ def run_code(
     return result
 
 
-def end_interview(db: Session, session: InterviewSession) -> tuple[InterviewReport, int]:
-    """Score the interview, persist the report, and close the learning loop."""
+def end_interview(
+    db: Session, session: InterviewSession, generate_report: bool = True
+) -> tuple[InterviewReport | None, int]:
+    """Score the interview, persist the report, and close the learning loop.
+
+    With generate_report=False the session just ends (status/ended_at); calling
+    again later with generate_report=True scores it then — the report page
+    offers exactly that."""
     existing = db.scalars(
         select(InterviewReport).where(InterviewReport.session_id == session.id)
     ).first()
     if existing is not None:  # idempotent
         count = len(list(db.scalars(select(ReviewTask).where(ReviewTask.session_id == session.id))))
         return existing, count
+
+    if not generate_report:
+        if session.status != "completed":
+            session.status = "completed"
+            session.ended_at = _now()
+            db.commit()
+        return None, 0
 
     code_versions = [
         {"label": v.label, "language": v.language, "code": v.code, "created_at": v.created_at}

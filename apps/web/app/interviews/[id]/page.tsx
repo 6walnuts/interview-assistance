@@ -205,7 +205,9 @@ export default function InterviewRoomPage() {
         const resp = await api.sendMessage(id, content, action);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
-        if (speaker.enabled) speaker.speak(resp.message.content);
+        // Hints are always read aloud — the reply to the hint button is the
+        // one message the candidate explicitly asked to hear.
+        if (speaker.enabled || action === "request_hint") speaker.speak(resp.message.content);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to send");
       } finally {
@@ -239,7 +241,10 @@ export default function InterviewRoomPage() {
   }
 
   async function endInterview() {
-    if (!window.confirm(t("End the interview and generate your report?"))) return;
+    if (!window.confirm(t("End the interview?"))) return;
+    const wantReport = window.confirm(
+      t("Generate your scoring report now? Choose Cancel to end without a report — you can generate it later from the report page.")
+    );
     setBusy(true);
     callRef.current?.stop();
     callRef.current = null;
@@ -247,8 +252,8 @@ export default function InterviewRoomPage() {
       if (detail?.session.interview_type === "system_design" && design.trim()) {
         await api.sendMessage(id, `Here is my final design summary:\n${design}`, "message");
       }
-      await api.endInterview(id);
-      router.push(`/interviews/${id}/report`);
+      await api.endInterview(id, wantReport);
+      router.push(wantReport ? `/interviews/${id}/report` : "/dashboard");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to end interview");
       setBusy(false);

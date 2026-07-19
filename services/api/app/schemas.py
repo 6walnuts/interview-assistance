@@ -192,8 +192,12 @@ class RunCodeResponse(BaseModel):
     execution: ExecutionOut
 
 
+class EndInterviewRequest(BaseModel):
+    generate_report: bool = True
+
+
 class EndInterviewResponse(BaseModel):
-    report_id: str
+    report_id: str | None
     review_task_count: int
 
 

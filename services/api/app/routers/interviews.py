@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import InterviewMessage, InterviewReport, InterviewSession, Question, ReviewTask, User
 from ..schemas import (
+    EndInterviewRequest,
     EndInterviewResponse,
     ExecutionOut,
     InterviewCreate,
@@ -119,11 +120,14 @@ def run_code(
 
 @router.post("/{session_id}/end", response_model=EndInterviewResponse)
 def end_interview(
-    session_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    session_id: str, body: EndInterviewRequest | None = None,
+    user: User = Depends(get_current_user), db: Session = Depends(get_db),
 ) -> EndInterviewResponse:
     session = _owned_session(session_id, user, db)
-    report, task_count = interview_service.end_interview(db, session)
-    return EndInterviewResponse(report_id=report.id, review_task_count=task_count)
+    generate = body.generate_report if body is not None else True
+    report, task_count = interview_service.end_interview(db, session, generate_report=generate)
+    return EndInterviewResponse(report_id=report.id if report else None,
+                                review_task_count=task_count)
 
 
 @router.get("/{session_id}/report", response_model=ReportOut)

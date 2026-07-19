@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type { Report, Task } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 
@@ -19,17 +19,54 @@ export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [notGenerated, setNotGenerated] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getReport(id)
       .then(setReport)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load report"));
+      .catch((e) => {
+        // 404 = the interview ended without scoring; offer to generate now.
+        if (e instanceof ApiError && e.status === 404) setNotGenerated(true);
+        else setError(e instanceof Error ? e.message : "Failed to load report");
+      });
     api.listTasks().then((all) => setTasks(all.filter((t) => t.source_session_id === id)))
       .catch(() => undefined);
   }, [id]);
 
+  async function generateNow() {
+    setGenerating(true);
+    setError(null);
+    try {
+      await api.endInterview(id, true);
+      setReport(await api.getReport(id));
+      setNotGenerated(false);
+      api.listTasks().then((all) => setTasks(all.filter((t) => t.source_session_id === id)))
+        .catch(() => undefined);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to generate report");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   if (error) return <AppShell><p className="rounded-lg bg-red-50 p-3 text-red-700">{error}</p></AppShell>;
+  if (notGenerated) {
+    return (
+      <AppShell>
+        <div className="card mx-auto mt-10 max-w-md text-center">
+          <h1 className="text-xl font-bold">{t("No report yet")}</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {t("This interview ended without scoring. Generate the report now to get your scores and study plan.")}
+          </p>
+          <button className="btn-primary mt-4" onClick={generateNow} disabled={generating}>
+            {generating ? t("Generating report…") : t("Generate report")}
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
   if (!report) return <AppShell><p className="text-slate-500">{t("Generating report…")}</p></AppShell>;
 
   return (

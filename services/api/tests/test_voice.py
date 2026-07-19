@@ -82,6 +82,26 @@ def test_realtime_transcript_rejects_ended_interview(client, auth_headers):
     assert resp.status_code == 409
 
 
+def test_end_without_report_then_generate_later(client, auth_headers):
+    session_id = _create_interview(client, auth_headers)
+
+    # Step 1: end the interview but skip scoring.
+    end = client.post(f"/api/interviews/{session_id}/end",
+                      json={"generate_report": False}, headers=auth_headers)
+    assert end.status_code == 200, end.text
+    assert end.json()["report_id"] is None
+    detail = client.get(f"/api/interviews/{session_id}", headers=auth_headers).json()
+    assert detail["session"]["status"] == "completed"
+    assert client.get(f"/api/interviews/{session_id}/report", headers=auth_headers).status_code == 404
+
+    # Step 2: generate the report later (the report page's "generate now" path).
+    end2 = client.post(f"/api/interviews/{session_id}/end",
+                       json={"generate_report": True}, headers=auth_headers)
+    assert end2.status_code == 200, end2.text
+    assert end2.json()["report_id"]
+    assert client.get(f"/api/interviews/{session_id}/report", headers=auth_headers).status_code == 200
+
+
 def test_realtime_tool_advance_stage(client, auth_headers):
     session_id = _create_interview(client, auth_headers)
     resp = client.post("/api/voice/realtime-tool", json={
