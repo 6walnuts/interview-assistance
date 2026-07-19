@@ -195,6 +195,12 @@ export default function LearnPage() {
                 {tr(m.replaceAll("_", " "))}
               </button>
             ))}
+            {selected && (
+              <Link href={`/duo/${selected.slug}`}
+                className="rounded-lg bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100">
+                🎭 {tr("Watch AI × AI Q&A")}
+              </Link>
+            )}
           </div>
           <div className="mt-3 flex-1 space-y-2 overflow-y-auto">
             {chat.length === 0 && (

@@ -32,6 +32,33 @@ def test_lesson_anchored_on_question(client, auth_headers):
     assert ok.status_code == 200
 
 
+def test_duo_modes_alternate(client, auth_headers):
+    ask = client.post("/api/coach/chat", json={
+        "message": "[Begin the dialogue: ask your first, most fundamental question.]",
+        "mode": "duo_asker", "topic_slug": "caching",
+    }, headers=auth_headers)
+    assert ask.status_code == 200, ask.text
+    q1 = ask.json()["reply"]
+    assert "Question 1" in q1  # mock asker numbers its questions
+
+    answer = client.post("/api/coach/chat", json={
+        "message": q1, "mode": "duo_answerer", "topic_slug": "caching",
+        "history": [{"role": "assistant", "content": q1}],
+    }, headers=auth_headers)
+    assert answer.status_code == 200
+    assert "answer" in answer.json()["reply"].lower()
+
+    # Deeper into the dialogue, the asker's question number advances.
+    ask3 = client.post("/api/coach/chat", json={
+        "message": "some answer", "mode": "duo_asker", "topic_slug": "caching",
+        "history": [
+            {"role": "assistant", "content": "q1"}, {"role": "user", "content": "a1"},
+            {"role": "assistant", "content": "q2"}, {"role": "user", "content": "a2"},
+        ],
+    }, headers=auth_headers)
+    assert "Question 3" in ask3.json()["reply"]
+
+
 def test_coach_history_capped(client, auth_headers):
     too_long = [{"role": "user", "content": f"turn {i}"} for i in range(31)]
     resp = client.post("/api/coach/chat", json={
