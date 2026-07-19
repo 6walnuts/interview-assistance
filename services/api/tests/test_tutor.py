@@ -58,6 +58,17 @@ def test_duo_modes_alternate(client, auth_headers):
     }, headers=auth_headers)
     assert "Question 3" in ask3.json()["reply"]
 
+    # Long dialogues end with the explicit termination marker.
+    deep_history = [
+        {"role": "assistant" if i % 2 == 0 else "user", "content": f"turn {i}"}
+        for i in range(12)
+    ]
+    closing = client.post("/api/coach/chat", json={
+        "message": "final answer", "mode": "duo_asker", "topic_slug": "caching",
+        "history": deep_history,
+    }, headers=auth_headers)
+    assert "[END_OF_DIALOGUE]" in closing.json()["reply"]
+
 
 def test_bq_duo_modes(client, auth_headers):
     client.put("/api/profile", json={
