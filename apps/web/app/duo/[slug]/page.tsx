@@ -20,7 +20,10 @@ const HISTORY_SENT = 16;
 export default function DuoPage() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
+  // Special variant: /duo/bq = resume-grounded behavioral sparring match.
+  const isBQ = slug === "bq";
   const [topic, setTopic] = useState<Topic | null>(null);
+  const [hasResume, setHasResume] = useState<boolean | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -39,10 +42,16 @@ export default function DuoPage() {
   speakRef.current = speaker.speak;
 
   useEffect(() => {
+    if (isBQ) {
+      api.getProfile()
+        .then(({ profile }) => setHasResume(Boolean(profile.resume_text?.trim())))
+        .catch(() => setHasResume(null));
+      return;
+    }
     api.listTopics()
       .then((all) => setTopic(all.find((tp) => tp.slug === slug) ?? null))
       .catch(() => undefined);
-  }, [slug]);
+  }, [slug, isBQ]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +80,9 @@ export default function DuoPage() {
       !last || last.speaker === "answerer" ? "asker" : "answerer";
     const message = last
       ? last.text
-      : "[Begin the dialogue: ask your first, most fundamental question.]";
+      : isBQ
+        ? "[Begin: ask your first behavioral question grounded in the resume.]"
+        : "[Begin the dialogue: ask your first, most fundamental question.]";
     busyRef.current = true;
     setBusy(true);
     setError(null);
@@ -79,8 +90,11 @@ export default function DuoPage() {
     setTurns(base);
     try {
       let streamed = "";
+      const mode = isBQ
+        ? (persona === "asker" ? "bq_asker" : "bq_answerer")
+        : (persona === "asker" ? "duo_asker" : "duo_answerer");
       const resp = await api.streamCoachChat(
-        message, persona === "asker" ? "duo_asker" : "duo_answerer", slug,
+        message, mode, isBQ ? undefined : slug,
         historyFor(persona, [...all, { speaker: persona, text: "" }]),
         (delta) => {
           streamed += delta;
@@ -101,7 +115,7 @@ export default function DuoPage() {
       busyRef.current = false;
       setBusy(false);
     }
-  }, [slug, historyFor]);
+  }, [slug, isBQ, historyFor]);
 
   const playLoop = useCallback(async () => {
     while (playingRef.current && turnsRef.current.length < MAX_TURNS) {
@@ -144,9 +158,9 @@ export default function DuoPage() {
     await generateTurn(); // last turn is the user question -> answerer replies
   }
 
-  const roleLabel: Record<Speaker, string> = {
-    asker: `🤔 ${t("Asker")}`, answerer: `💡 ${t("Answerer")}`, user: `🙋 ${t("You")}`,
-  };
+  const roleLabel: Record<Speaker, string> = isBQ
+    ? { asker: `👔 ${t("Interviewer AI")}`, answerer: `🧑‍💼 ${t("Candidate AI")}`, user: `🙋 ${t("You")}` }
+    : { asker: `🤔 ${t("Asker")}`, answerer: `💡 ${t("Answerer")}`, user: `🙋 ${t("You")}` };
   const roleStyle: Record<Speaker, string> = {
     asker: "bg-slate-100",
     answerer: "ml-auto bg-brand-50",
@@ -159,7 +173,7 @@ export default function DuoPage() {
         <div className="flex items-center gap-3">
           <Link href="/learn" className="text-sm text-slate-500 hover:text-slate-700">← {t("Learn")}</Link>
           <span className="font-semibold text-brand-700">
-            🎭 {t("AI × AI Q&A")}{topic ? ` — ${topic.name}` : ""}
+            {isBQ ? `⚔️ ${t("Resume BQ Battle")}` : `🎭 ${t("AI × AI Q&A")}${topic ? ` — ${topic.name}` : ""}`}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -183,9 +197,17 @@ export default function DuoPage() {
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-4">
         <div className="flex-1 space-y-3 overflow-y-auto py-4">
+          {isBQ && hasResume === false && (
+            <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+              {t("No resume on file — the interviewer will ask generic behavioral questions.")}{" "}
+              <Link href="/interviews/new" className="font-medium underline">{t("Paste your resume")}</Link>
+            </div>
+          )}
           {turns.length === 0 && (
             <p className="mt-10 text-center text-sm text-slate-500">
-              {t("Two AIs quiz each other from basics to depth — press Play, then sit back and learn. You can jump in with your own question anytime.")}
+              {isBQ
+                ? t("An interviewer AI grills a candidate AI on YOUR resume — behavioral questions, pushbacks, and model STAR answers. Press Play and study the moves.")
+                : t("Two AIs quiz each other from basics to depth — press Play, then sit back and learn. You can jump in with your own question anytime.")}
             </p>
           )}
           {turns.map((turn, i) => (

@@ -114,6 +114,18 @@ const DICT: Record<string, [string, string]> = {
      "Dos IA se preguntan de lo básico a lo profundo: pulsa Reproducir y aprende. Puedes intervenir con tu propia pregunta cuando quieras."],
   "Ask your own question… (the answering AI replies)":
     ["插入你自己的问题…（由回答 AI 作答）", "Haz tu propia pregunta… (responde la IA)"],
+  "Resume BQ Battle": ["简历 BQ 对抗", "Duelo de BQ con currículum"],
+  "Interviewer AI": ["面试官 AI", "IA entrevistadora"],
+  "Candidate AI": ["候选人 AI", "IA candidata"],
+  "Watch an interviewer AI grill a candidate AI on your resume — with model STAR answers.":
+    ["看面试官 AI 拿你的简历深挖行为面试题，候选人 AI 给出示范级 STAR 回答。",
+     "Mira cómo una IA entrevistadora interroga a una IA candidata sobre tu currículum, con respuestas STAR modelo."],
+  "An interviewer AI grills a candidate AI on YOUR resume — behavioral questions, pushbacks, and model STAR answers. Press Play and study the moves.":
+    ["面试官 AI 会拿你的简历逐条深挖行为面试题、对含糊回答穷追猛打；候选人 AI 示范圆满的 STAR 回答。点“播放”，观摩学习。",
+     "Una IA entrevistadora interroga a una IA candidata sobre TU currículum: preguntas conductuales, contraataques y respuestas STAR modelo. Pulsa Reproducir y aprende."],
+  "No resume on file — the interviewer will ask generic behavioral questions.":
+    ["还没有保存简历——面试官将改问通用行为面试题。", "Sin currículum guardado: la entrevistadora hará preguntas conductuales genéricas."],
+  "Paste your resume": ["去粘贴简历", "Pega tu currículum"],
   "Mastery": ["掌握度", "Dominio"],
   "Coach": ["教练", "Coach"],
   "Pick a topic to start learning.": ["选择一个知识点开始学习。", "Elige un tema para empezar a aprender."],

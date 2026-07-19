@@ -354,7 +354,7 @@ class CoachChatRequest(BaseModel):
     mode: Literal[
         "explain", "summarize", "quiz", "flashcards", "guided_practice",
         "coding_drill", "system_design_drill", "review_mistakes", "daily_plan", "weekly_plan",
-        "lesson", "duo_asker", "duo_answerer",
+        "lesson", "duo_asker", "duo_answerer", "bq_asker", "bq_answerer",
     ] = "explain"
     # Prior turns of this conversation (oldest first) so multi-turn chats and
     # lessons keep their context; capped to protect the prompt budget.

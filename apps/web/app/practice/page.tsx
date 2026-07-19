@@ -11,6 +11,7 @@ const DRILLS = [
   { name: "Quiz", desc: "Topic quizzes via the coach (quiz mode).", href: "/learn", time: "5 min" },
   { name: "Flashcards", desc: "Rapid-fire concept cards via the coach.", href: "/learn", time: "5 min" },
   { name: "Mistake Review", desc: "Re-test the mistakes from your last interviews.", href: "/tasks", time: "15 min" },
+  { name: "Resume BQ Battle", desc: "Watch an interviewer AI grill a candidate AI on your resume — with model STAR answers.", href: "/duo/bq", time: "15 min" },
 ];
 
 export default function PracticePage() {

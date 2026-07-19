@@ -6,6 +6,8 @@ from ..models import Question, UserProfile, UserSkillProfile
 from .agent_schemas import CoachReply
 from .llm import complete_json, stream_reply
 from .prompts import (
+    BQ_DUO_ANSWERER_SYSTEM,
+    BQ_DUO_ASKER_SYSTEM,
     COACH_SYSTEM,
     DUO_ANSWERER_SYSTEM,
     DUO_ASKER_SYSTEM,
@@ -39,11 +41,23 @@ def _hoist_code(reply: CoachReply) -> CoachReply:
 
 
 def _mock_reply(mode: str, topic: str, message: str = "", hist_len: int = 0) -> CoachReply:
-    if mode == "duo_asker":
+    if mode in ("duo_asker", "bq_asker"):
         n = hist_len // 2 + 1
+        if mode == "bq_asker":
+            return CoachReply(
+                reply=f"(mock BQ interviewer) Question {n}: tell me about a time on the "
+                      f"project from your resume when things went wrong — what exactly "
+                      f"did YOU do, and what was the measurable result?",
+            )
         return CoachReply(
             reply=f"(mock asker) Question {n} on {topic}: explain the core mechanism "
                   f"at depth level {n}, and where does it break down?",
+        )
+    if mode == "bq_answerer":
+        return CoachReply(
+            reply="(mock candidate) At that point our launch was slipping; I owned the "
+                  "rollback plan, drove the fix across two teams, and we shipped 3 days "
+                  "late instead of 3 weeks — the lesson was to cut scope earlier.",
         )
     if mode == "duo_answerer":
         return CoachReply(
@@ -92,6 +106,10 @@ def _build_prompt(
         base = DUO_ASKER_SYSTEM.format(level=level, role=role, topic=topic)
     elif mode == "duo_answerer":
         base = DUO_ANSWERER_SYSTEM.format(level=level, role=role, topic=topic)
+    elif mode in ("bq_asker", "bq_answerer"):
+        resume = ((profile.resume_text or "").strip()[:2000] if profile else "") or "(empty)"
+        template = BQ_DUO_ASKER_SYSTEM if mode == "bq_asker" else BQ_DUO_ANSWERER_SYSTEM
+        base = template.format(level=level, role=role, resume=resume)
     else:
         base = COACH_SYSTEM.format(level=level, role=role, mode=mode, topic=topic,
                                    skill_state=json.dumps(skill_state))
