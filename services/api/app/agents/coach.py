@@ -2,7 +2,7 @@
 import json
 import re
 
-from ..models import UserProfile, UserSkillProfile
+from ..models import Question, UserProfile, UserSkillProfile
 from .agent_schemas import CoachReply
 from .llm import complete_json, stream_reply
 from .prompts import COACH_SYSTEM, TUTOR_SYSTEM, language_instruction
@@ -57,6 +57,7 @@ def _build_prompt(
     profile: UserProfile | None,
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None,
+    question: Question | None = None,
 ) -> tuple[str, list[dict[str, str]], str]:
     topic = topic_slug or "general interview preparation"
     skill_state = (
@@ -77,6 +78,13 @@ def _build_prompt(
             role=profile.target_role if profile else "Software Engineer",
             mode=mode, topic=topic, skill_state=json.dumps(skill_state),
         )
+    if question is not None:
+        base += (
+            "\nThis lesson is anchored on one classic interview question — teach the "
+            "student to master it step by step, working through the evaluation points:\n"
+            f"Title: {question.title}\nPrompt: {question.prompt}\n"
+            f"Evaluation points: {json.dumps(question.rubric.get('expected', []))}\n"
+        )
     system = language_instruction(locale) + base
     messages = [*(history or []), {"role": "user", "content": message}]
     return system, messages, topic
@@ -89,8 +97,10 @@ def chat(
     profile: UserProfile | None,
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None = None,
+    question: Question | None = None,
 ) -> CoachReply:
-    system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill, history)
+    system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
+                                            history, question)
     return _hoist_code(complete_json(system, messages, CoachReply,
                                      lambda: _mock_reply(mode, topic, message)))
 
@@ -102,9 +112,11 @@ def chat_stream(
     profile: UserProfile | None,
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None = None,
+    question: Question | None = None,
 ):
     """Yields ("delta", text) chunks then ("final", CoachReply)."""
-    system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill, history)
+    system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
+                                            history, question)
     for kind, payload in stream_reply(system, messages, CoachReply,
                                       lambda: _mock_reply(mode, topic, message)):
         # The final payload replaces the streamed bubble, so fence cleanup

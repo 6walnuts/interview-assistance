@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Execution, Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
@@ -43,8 +43,20 @@ type ChatMsg = { role: "user" | "coach"; text: string };
 const HISTORY_SENT = 20;
 
 export default function TutorPage() {
+  return (
+    <Suspense>
+      <TutorLesson />
+    </Suspense>
+  );
+}
+
+function TutorLesson() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
+  const search = useSearchParams();
+  // Optional anchor: teach toward one specific question from the bank.
+  const questionId = search.get("question_id");
+  const questionTitle = search.get("title");
   const [topic, setTopic] = useState<Topic | null>(null);
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -95,7 +107,7 @@ export default function TutorPage() {
           streamed += delta;
           const partial = streamed;
           setChat([...withUser, { role: "coach", text: partial }]);
-        });
+        }, questionId);
         setChat([...withUser, { role: "coach", text: resp.reply }]);
         if (resp.code_snippet) {
           // Apply the snippet straight into the editor, keeping a revert point.
@@ -111,7 +123,7 @@ export default function TutorPage() {
         setBusy(false);
       }
     },
-    [slug, speaker.enabled, speaker.speak]
+    [slug, questionId, speaker.enabled, speaker.speak]
   );
 
   const appendVoiceLine = useCallback((role: "user" | "coach", text: string) => {
@@ -158,8 +170,13 @@ export default function TutorPage() {
     } catch {
       /* ignore */
     }
-    void ask("Start the lesson from the beginning.", []);
-  }, [slug, ask]);
+    void ask(
+      questionTitle
+        ? `Start the lesson focused on the classic interview question "${questionTitle}": teach me to master it step by step.`
+        : "Start the lesson from the beginning.",
+      []
+    );
+  }, [slug, ask, questionTitle]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -206,6 +223,12 @@ export default function TutorPage() {
           <Link href="/learn" className="text-sm text-slate-500 hover:text-slate-700">← {t("Learn")}</Link>
           <span className="font-semibold text-brand-700">{t("Tutor")}{topic ? ` — ${topic.name}` : ""}</span>
           {topic && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">D{topic.difficulty}</span>}
+          {questionTitle && (
+            <span className="max-w-xs truncate rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700"
+              title={questionTitle}>
+              📌 {questionTitle}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button

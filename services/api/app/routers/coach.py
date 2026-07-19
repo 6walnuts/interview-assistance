@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..agents import coach as coach_agent
 from ..agents.llm import AgentError
 from ..db import get_db
-from ..models import LearningTopic, User, UserProfile, UserSkillProfile
+from ..models import LearningTopic, Question, User, UserProfile, UserSkillProfile
 from ..schemas import CoachChatRequest, CoachChatResponse
 from ..security import get_current_user
 
@@ -25,16 +25,17 @@ def _chat_context(body: CoachChatRequest, user: User, db: Session):
                 UserSkillProfile.user_id == user.id, UserSkillProfile.topic_id == topic.id,
             )).first()
     history = [{"role": t.role, "content": t.content} for t in body.history]
-    return profile, skill, history
+    question = db.get(Question, body.question_id) if body.question_id else None
+    return profile, skill, history, question
 
 
 @router.post("/chat", response_model=CoachChatResponse)
 def chat(
     body: CoachChatRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> CoachChatResponse:
-    profile, skill, history = _chat_context(body, user, db)
+    profile, skill, history, question = _chat_context(body, user, db)
     reply = coach_agent.chat(body.message, body.mode, body.topic_slug, profile, skill,
-                             history=history)
+                             history=history, question=question)
     return CoachChatResponse(reply=reply.reply, suggested_actions=reply.suggested_actions,
                              code_snippet=reply.code_snippet)
 
@@ -45,12 +46,13 @@ def chat_stream(
 ) -> StreamingResponse:
     """SSE variant: `data: {"delta": ...}` chunks of the reply as it streams,
     then a final `data: {"done": true, ...}` event with the full payload."""
-    profile, skill, history = _chat_context(body, user, db)
+    profile, skill, history, question = _chat_context(body, user, db)
 
     def events():
         try:
             for kind, payload in coach_agent.chat_stream(
                 body.message, body.mode, body.topic_slug, profile, skill, history=history,
+                question=question,
             ):
                 if kind == "delta":
                     yield f"data: {json.dumps({'delta': payload})}\n\n"

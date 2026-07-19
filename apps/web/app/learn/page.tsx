@@ -222,10 +222,10 @@ export default function LearnPage() {
                       <span className="ml-1.5 text-xs text-slate-400">{tr(q.difficulty)}</span>
                     </span>
                     <Link
-                      className="shrink-0 rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
-                      href={`/interviews/new?question_id=${q.id}&type=${q.interview_type}&title=${encodeURIComponent(q.title)}`}
+                      className="shrink-0 rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100"
+                      href={`/tutor/${selected.slug}?question_id=${q.id}&title=${encodeURIComponent(q.title)}`}
                     >
-                      {tr("Interview with this question")}
+                      {tr("Learn with this question")}
                     </Link>
                   </div>
                 ))}
