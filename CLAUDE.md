@@ -19,9 +19,11 @@ AI 面试教练平台：学习 → 练习 → 模拟面试 → 自动评分 → 
 
 ```bash
 # 后端（默认 SQLite；LOCAL_MODE=true 免登录单机模式；MOCK_AI=true 无需任何 API key）
-cd services/api && python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && python3 -m app.seed
-LOCAL_MODE=true SANDBOX_MODE=subprocess uvicorn app.main:app --reload --port 8000
+# 需要 Python ≥3.10。macOS 系统自带 /usr/bin/python3 是 3.9 不能用；
+# 建 venv 显式指定版本（brew install python@3.12），命令走 .venv/bin/ 全路径最稳。
+cd services/api && python3.12 -m venv .venv
+.venv/bin/pip install -r requirements.txt && .venv/bin/python -m app.seed
+LOCAL_MODE=true SANDBOX_MODE=subprocess .venv/bin/uvicorn app.main:app --reload --port 8000
 
 # 前端（另开终端）
 cd apps/web && npm install && npm run dev   # http://localhost:3000

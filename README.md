@@ -54,14 +54,49 @@ DeepSeek/Kimi 走 OpenAI 兼容接口；Claude 走官方 `anthropic` SDK。
 
 ### 1. 后端（默认 SQLite，零依赖启动）
 
+> ⚠️ **需要 Python ≥ 3.10（推荐 3.12）。先检查版本再往下走：**
+>
+> ```bash
+> python3 --version
+> ```
+>
+> **macOS 用户特别注意**：系统自带的 `python3` 是 Xcode 命令行工具里的 **3.9**
+> （路径在 `/usr/bin/python3`），跑本项目会报
+> `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`。
+> 如果版本低于 3.10，先装新版并**在建 venv 时显式指定版本号**：
+>
+> ```bash
+> brew install python@3.12
+> ```
+
 ```bash
 cd services/api
-python3 -m venv .venv && source .venv/bin/activate
-# Windows: python -m venv .venv 然后 .venv\Scripts\activate
+python3.12 -m venv .venv          # 显式指定版本，别用裸的 python3
+source .venv/bin/activate
+# Windows: py -3.12 -m venv .venv 然后 .venv\Scripts\activate
+.venv/bin/python --version        # 检查点：必须显示 3.12.x 才继续！
 pip install -r requirements.txt
-python3 -m app.seed         # 建表 + 导入知识点/题库/Quiz
+python -m app.seed                # 建表 + 导入知识点/题库/Quiz
 uvicorn app.main:app --reload --port 8000
 ```
+
+**防坑技巧**：`source` 激活只对当前终端窗口有效，换了窗口就失效。拿不准时
+直接用 venv 内的全路径命令，永远不会认错解释器：
+
+```bash
+.venv/bin/python -m app.seed
+LOCAL_MODE=true SANDBOX_MODE=subprocess .venv/bin/uvicorn app.main:app --reload --port 8000
+```
+
+#### 常见报错对照表
+
+| 报错 | 原因 | 解决 |
+|---|---|---|
+| `TypeError: unsupported operand type(s) for \|: 'type' and 'NoneType'` | 命令跑在了 Python ≤3.9 上（venv 没激活，或 venv 本身是 3.9 建的） | 看下一行 |
+| 同上，但 `.venv/bin/python -m app.seed` 也报 | venv 是用 3.9 创建的（或新旧版本混杂） | `rm -rf .venv` 后用 `python3.12 -m venv .venv` 重建、重装依赖 |
+| `psycopg2.OperationalError: connection ... port 5432 failed` | `.env` 里 `DATABASE_URL` 指向了没在跑的 Postgres | 改成 `DATABASE_URL=sqlite:///./dev.db`（或删掉该行用默认值） |
+| `command not found: python3.12` | Homebrew 装好了但不在 PATH | 用全路径 `/opt/homebrew/bin/python3.12`（Intel Mac 为 `/usr/local/bin/python3.12`） |
+| 前端报 `502` + 余额/配额提示 | LLM 供应商账户没充值或 key 无效 | 按提示充值，或换 `LLM_PROVIDER` |
 
 **单机免密码模式**：个人本地使用可跳过注册登录，所有存档记在一个本地账号下：
 
