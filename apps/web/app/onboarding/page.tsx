@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import ResumeUpload from "@/components/ResumeUpload";
 import { api } from "@/lib/api";
 import type { Level } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
@@ -143,7 +144,10 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div>
-          <label className="label">{t("Resume (optional — paste plain text)")}</label>
+          <div className="flex items-center justify-between">
+            <label className="label">{t("Resume (optional — paste plain text)")}</label>
+            <ResumeUpload onExtract={setResume} onError={setError} />
+          </div>
           <textarea
             className="input h-28 resize-none text-sm"
             placeholder={t("The interviewer will probe your claimed experience, and your study plan will target the gaps.")}

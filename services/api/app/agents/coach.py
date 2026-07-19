@@ -107,7 +107,7 @@ def _build_prompt(
     elif mode == "duo_answerer":
         base = DUO_ANSWERER_SYSTEM.format(level=level, role=role, topic=topic)
     elif mode in ("bq_asker", "bq_answerer"):
-        resume = ((profile.resume_text or "").strip()[:2000] if profile else "") or "(empty)"
+        resume = ((profile.resume_text or "").strip()[:4000] if profile else "") or "(empty)"
         template = BQ_DUO_ASKER_SYSTEM if mode == "bq_asker" else BQ_DUO_ANSWERER_SYSTEM
         base = template.format(level=level, role=role, resume=resume)
     else:

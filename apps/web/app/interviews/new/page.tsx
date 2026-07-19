@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import ResumeUpload from "@/components/ResumeUpload";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -155,10 +156,16 @@ function InterviewSetupForm() {
           </div>
         </div>
         <div>
-          <button type="button" className="text-sm text-brand-600 hover:text-brand-800"
-            onClick={() => setShowResume((v) => !v)}>
-            {showResume ? "▾" : "▸"} {t("Resume (optional — the interviewer will probe your experience)")}
-          </button>
+          <div className="flex items-center justify-between">
+            <button type="button" className="text-sm text-brand-600 hover:text-brand-800"
+              onClick={() => setShowResume((v) => !v)}>
+              {showResume ? "▾" : "▸"} {t("Resume (optional — the interviewer will probe your experience)")}
+            </button>
+            <ResumeUpload
+              onExtract={(text) => { setResume(text); setShowResume(true); }}
+              onError={setError}
+            />
+          </div>
           {showResume && (
             <textarea
               className="input mt-2 h-28 resize-none text-sm"
