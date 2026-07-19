@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { api, setToken } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  // In single-user local mode there is no auth — go straight to the app.
+  useEffect(() => {
+    api.health().then((h) => h.local_mode && router.replace("/dashboard")).catch(() => undefined);
+  }, [router]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

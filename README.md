@@ -50,6 +50,16 @@ python -m app.seed          # 建表 + 导入知识点/题库/Quiz
 uvicorn app.main:app --reload --port 8000
 ```
 
+**单机免密码模式**：个人本地使用可跳过注册登录，所有存档记在一个本地账号下：
+
+```bash
+LOCAL_MODE=true SANDBOX_MODE=subprocess uvicorn app.main:app --reload --port 8000
+```
+
+打开前端会自动跳过登录页直达 Dashboard（导航栏显示 "Local mode"）。
+所有数据仍持久化在 `services/api/dev.db`（SQLite），删除该文件即重置存档。
+注意：LOCAL_MODE 下任何能访问该端口的人都是同一账号，仅限本机使用。
+
 API 文档：http://localhost:8000/docs
 
 ### 2. 前端

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { setToken } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { api, setToken } from "@/lib/api";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -16,6 +17,11 @@ const NAV = [
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [localMode, setLocalMode] = useState(false);
+
+  useEffect(() => {
+    api.health().then((h) => setLocalMode(h.local_mode)).catch(() => undefined);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -38,15 +44,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
-            <button
-              className="ml-2 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100"
-              onClick={() => {
-                setToken(null);
-                router.push("/login");
-              }}
-            >
-              Sign out
-            </button>
+            {localMode ? (
+              <span className="ml-2 rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-500">
+                Local mode
+              </span>
+            ) : (
+              <button
+                className="ml-2 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100"
+                onClick={() => {
+                  setToken(null);
+                  router.push("/login");
+                }}
+              >
+                Sign out
+              </button>
+            )}
           </nav>
         </div>
       </header>

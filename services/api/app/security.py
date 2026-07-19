@@ -41,18 +41,42 @@ def create_access_token(user_id: str) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
+LOCAL_USER_EMAIL = "local@localhost"
+
+
+def _get_or_create_local_user(db: Session) -> User:
+    from sqlalchemy import select
+
+    from .models import UserProfile
+
+    user = db.scalars(select(User).where(User.email == LOCAL_USER_EMAIL)).first()
+    if user is None:
+        user = User(email=LOCAL_USER_EMAIL, password_hash="!", name="Local User")
+        db.add(user)
+        db.flush()
+        db.add(UserProfile(user_id=user.id))
+        db.commit()
+    return user
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     db: Session = Depends(get_db),
 ) -> User:
-    if credentials is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
     settings = get_settings()
+    if credentials is None:
+        if settings.local_mode:
+            return _get_or_create_local_user(db)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
     try:
         payload = jwt.decode(credentials.credentials, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
     except jwt.PyJWTError:
+        if settings.local_mode:
+            return _get_or_create_local_user(db)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
     user = db.get(User, payload.get("sub"))
     if user is None or user.status != "active":
+        if settings.local_mode:
+            return _get_or_create_local_user(db)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User not found or disabled")
     return user

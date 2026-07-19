@@ -63,6 +63,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  health: () =>
+    request<{ status: string; mock_ai: boolean; local_mode: boolean }>("/api/health"),
+
   register: (email: string, password: string, name: string) =>
     request<AuthResponse>("/api/auth/register", {
       method: "POST",

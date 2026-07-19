@@ -38,6 +38,23 @@ export default function InterviewRoomPage() {
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Draft autosave: restore unsent code/design for this session, then persist
+  // every edit so a page refresh never loses work.
+  const draftsLoaded = useRef(false);
+  useEffect(() => {
+    const savedCode = localStorage.getItem(`aic_code_${id}`);
+    if (savedCode) setCode(savedCode);
+    const savedDesign = localStorage.getItem(`aic_design_${id}`);
+    if (savedDesign) setDesign(savedDesign);
+    draftsLoaded.current = true;
+  }, [id]);
+  useEffect(() => {
+    if (draftsLoaded.current) localStorage.setItem(`aic_code_${id}`, code);
+  }, [code, id]);
+  useEffect(() => {
+    if (draftsLoaded.current) localStorage.setItem(`aic_design_${id}`, design);
+  }, [design, id]);
+
   useEffect(() => {
     api.getInterview(id)
       .then((d) => {

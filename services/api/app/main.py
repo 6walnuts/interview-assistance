@@ -33,4 +33,4 @@ for router in (auth.router, profile.router, topics.router, tasks.router,
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "mock_ai": not settings.ai_enabled}
+    return {"status": "ok", "mock_ai": not settings.ai_enabled, "local_mode": settings.local_mode}
