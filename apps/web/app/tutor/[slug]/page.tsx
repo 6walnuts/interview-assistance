@@ -12,7 +12,9 @@ import { useSpeaker, useVoiceInput } from "@/lib/voice";
 const MonacoEditor = dynamic(
   async () => {
     const { loader, default: Editor } = await import("@monaco-editor/react");
-    loader.config({ paths: { vs: "/monaco/vs" } });
+    // Absolute origin so Monaco's language workers can fetch their modules
+    // from inside a Worker context (see interview room editor).
+    loader.config({ paths: { vs: `${window.location.origin}/monaco/vs` } });
     return Editor;
   },
   { ssr: false }

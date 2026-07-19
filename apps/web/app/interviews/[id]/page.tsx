@@ -14,7 +14,9 @@ const MonacoEditor = dynamic(
     const { loader, default: Editor } = await import("@monaco-editor/react");
     // Self-hosted Monaco assets (copied to public/ by scripts/copy-monaco.mjs)
     // instead of the default CDN, so the editor works offline / behind proxies.
-    loader.config({ paths: { vs: "/monaco/vs" } });
+    // The origin must be absolute: language workers (e.g. tsWorker for JS)
+    // fetch from inside a Worker where a bare "/monaco/vs" path cannot resolve.
+    loader.config({ paths: { vs: `${window.location.origin}/monaco/vs` } });
     return Editor;
   },
   { ssr: false }
