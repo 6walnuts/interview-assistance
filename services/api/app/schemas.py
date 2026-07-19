@@ -165,12 +165,19 @@ class SendMessageRequest(BaseModel):
 class SendMessageResponse(BaseModel):
     message: MessageOut
     current_stage: str
+    # Skeleton/outline for the requested hint, shown beside the editor.
+    hint_content: str = ""
 
 
 class RunCodeRequest(BaseModel):
     code: str = Field(min_length=1, max_length=50_000)
     language: Literal["python", "javascript", "go", "java", "cpp"] = "python"
     label: Literal["run", "submit"] = "run"
+
+
+class ScratchRunRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=50_000)
+    language: Literal["python", "javascript", "go", "java", "cpp"] = "python"
 
 
 class TestResultOut(BaseModel):
@@ -321,18 +328,28 @@ class StudyPlanResponse(BaseModel):
 
 
 # ---------- coach ----------
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=8000)
+
+
 class CoachChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     topic_slug: str | None = None
     mode: Literal[
         "explain", "summarize", "quiz", "flashcards", "guided_practice",
         "coding_drill", "system_design_drill", "review_mistakes", "daily_plan", "weekly_plan",
+        "lesson",
     ] = "explain"
+    # Prior turns of this conversation (oldest first) so multi-turn chats and
+    # lessons keep their context; capped to protect the prompt budget.
+    history: list[ChatTurn] = Field(default_factory=list, max_length=30)
 
 
 class CoachChatResponse(BaseModel):
     reply: str
     suggested_actions: list[str]
+    code_snippet: str = ""
 
 
 # ---------- voice ----------
@@ -346,7 +363,10 @@ class TTSRequest(BaseModel):
 
 
 class RealtimeSessionRequest(BaseModel):
-    interview_id: str
+    # Exactly one target: an interview (voice interviewer with stage tools)
+    # or a topic (voice tutor lesson).
+    interview_id: str | None = None
+    topic_slug: str | None = None
 
 
 class RealtimeSessionOut(BaseModel):

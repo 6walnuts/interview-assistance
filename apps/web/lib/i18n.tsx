@@ -92,6 +92,22 @@ const DICT: Record<string, [string, string]> = {
   "Infrastructure": ["基础设施", "Infraestructura"],
   "AI Infrastructure": ["AI 基础设施", "Infraestructura de IA"],
   "Machine Learning": ["机器学习", "Machine Learning"],
+  "Lesson →": ["辅导课 →", "Lección →"],
+  "Tutor": ["辅导老师", "Tutor"],
+  "Tutor is thinking…": ["老师思考中…", "El tutor está pensando…"],
+  "Answer the tutor… (Enter to send, Shift+Enter for newline)":
+    ["回答老师…（Enter 发送，Shift+Enter 换行）", "Responde al tutor… (Enter para enviar)"],
+  "Read the tutor's replies aloud": ["自动朗读老师的回复", "Leer en voz alta las respuestas del tutor"],
+  "Restart lesson": ["重新上课", "Reiniciar lección"],
+  "Restart this lesson? The current conversation will be cleared.":
+    ["重新开始这节课？当前对话将被清空。", "¿Reiniciar la lección? La conversación actual se borrará."],
+  "Practice editor": ["练习编辑器", "Editor de práctica"],
+  "Hint": ["提示", "Pista"],
+  "Dismiss": ["关闭", "Cerrar"],
+  "Insert into editor": ["插入编辑器", "Insertar en el editor"],
+  "Ask for a hint on the current exercise": ["就当前练习要一个提示", "Pide una pista sobre el ejercicio actual"],
+  "Share with tutor": ["发给老师点评", "Compartir con el tutor"],
+  "Switch the editor language": ["切换编辑器语言", "Cambiar el lenguaje del editor"],
   "explain": ["讲解", "explicar"],
   "quiz": ["测验", "quiz"],
   "flashcards": ["记忆卡", "tarjetas"],
@@ -104,12 +120,16 @@ const DICT: Record<string, [string, string]> = {
   "Auto-read": ["自动朗读", "Leer en voz alta"],
   "Read the interviewer's replies aloud": ["自动朗读面试官的回复", "Leer en voz alta las respuestas del entrevistador"],
   "Read the coach's replies aloud": ["自动朗读教练的回复", "Leer en voz alta las respuestas del coach"],
+  "Read-aloud speed": ["朗读速度", "Velocidad de lectura"],
   "Voice call": ["语音通话", "Llamada de voz"],
   "Hang up": ["挂断", "Colgar"],
   "Connecting…": ["连接中…", "Conectando…"],
   "Talk to the interviewer in a live voice call — everything is transcribed into the chat":
     ["和面试官实时语音对话——内容会自动转成字幕进入聊天记录",
      "Habla con el entrevistador en una llamada de voz en vivo: todo se transcribe al chat"],
+  "Talk to the tutor in a live voice call — everything is transcribed into the lesson":
+    ["和老师实时语音对话——内容会自动转成字幕进入课程记录",
+     "Habla con el tutor en una llamada de voz en vivo: todo se transcribe a la lección"],
 
   // Practice page
   "Short, targeted sessions — 5, 15 or 30 minutes.":

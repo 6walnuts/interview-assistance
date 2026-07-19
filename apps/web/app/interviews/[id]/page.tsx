@@ -8,13 +8,16 @@ import type { Execution, InterviewDetail, Message } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
+import SpeedSelect from "@/components/SpeedSelect";
 
 const MonacoEditor = dynamic(
   async () => {
     const { loader, default: Editor } = await import("@monaco-editor/react");
     // Self-hosted Monaco assets (copied to public/ by scripts/copy-monaco.mjs)
     // instead of the default CDN, so the editor works offline / behind proxies.
-    loader.config({ paths: { vs: "/monaco/vs" } });
+    // The origin must be absolute: language workers (e.g. tsWorker for JS)
+    // fetch from inside a Worker where a bare "/monaco/vs" path cannot resolve.
+    loader.config({ paths: { vs: `${window.location.origin}/monaco/vs` } });
     return Editor;
   },
   { ssr: false }
@@ -79,8 +82,11 @@ export default function InterviewRoomPage() {
   const [stage, setStage] = useState("introduction");
   const [input, setInput] = useState("");
   const [code, setCode] = useState("# Write your solution here\n");
+  // Editor language: starts from the session config, switchable mid-interview.
+  const [editorLang, setEditorLang] = useState<string | null>(null);
   const [design, setDesign] = useState("");
   const [execution, setExecution] = useState<Execution | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -119,7 +125,7 @@ export default function InterviewRoomPage() {
     }
     setError(null);
     try {
-      callRef.current = await startRealtimeCall(id, {
+      callRef.current = await startRealtimeCall({ interviewId: id }, {
         onUserTranscript: (text) => addVoiceLine("candidate", text),
         onAssistantTranscript: (text) => addVoiceLine("interviewer", text),
         onToolCall: async (name, args) => {
@@ -205,6 +211,7 @@ export default function InterviewRoomPage() {
         const resp = await api.sendMessage(id, content, action);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
+        if (resp.hint_content) setHint(resp.hint_content);
         // Hints are always read aloud — the reply to the hint button is the
         // one message the candidate explicitly asked to hear.
         if (speaker.enabled || action === "request_hint") speaker.speak(resp.message.content);
@@ -217,8 +224,18 @@ export default function InterviewRoomPage() {
     [busy, id, stage, speaker.enabled, speaker.speak]
   );
 
+  const activeLang = editorLang ?? detail?.session.language ?? "python";
+
+  function switchEditorLang(next: string) {
+    const currentSetup = LANGUAGE_SETUP[activeLang] ?? LANGUAGE_SETUP.python;
+    const untouched = code === currentSetup.starter || !code.trim();
+    setEditorLang(next);
+    if (untouched) setCode((LANGUAGE_SETUP[next] ?? LANGUAGE_SETUP.python).starter);
+    setExecution(null);
+  }
+
   async function runCode(label: "run" | "submit") {
-    const lang = detail?.session.language ?? "python";
+    const lang = activeLang;
     setRunning(true);
     setError(null);
     try {
@@ -297,6 +314,7 @@ export default function InterviewRoomPage() {
           >
             {speaker.enabled ? "🔊" : "🔇"} {t("Auto-read")}
           </button>
+          <SpeedSelect rate={speaker.rate} onChange={speaker.setRate} />
           <span className={`text-sm font-mono ${remaining !== null && remaining < 5 * 60_000 ? "text-red-600" : "text-slate-600"}`}>
             ⏱ {minutes}:{seconds}
           </span>
@@ -371,22 +389,46 @@ export default function InterviewRoomPage() {
             )}
           </div>
 
+          {hint && (
+            <div className="border-b border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase text-amber-700">💡 {t("Hint")}</span>
+                <button className="text-xs text-amber-600 hover:text-amber-800" onClick={() => setHint(null)}>
+                  ✕ {t("Dismiss")}
+                </button>
+              </div>
+              <pre className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-amber-900">{hint}</pre>
+            </div>
+          )}
+
           {isCoding ? (
             <>
               <div className="flex-1">
                 <MonacoEditor
-                  language={(LANGUAGE_SETUP[detail.session.language] ?? LANGUAGE_SETUP.python).monaco}
+                  language={(LANGUAGE_SETUP[activeLang] ?? LANGUAGE_SETUP.python).monaco}
                   value={code}
                   onChange={(v) => setCode(v ?? "")}
                   options={{ minimap: { enabled: false }, fontSize: 14, scrollBeyondLastLine: false }}
                 />
               </div>
               <div className="border-t border-slate-200 bg-white p-3">
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button className="btn-secondary" disabled={running} onClick={() => runCode("run")}>
                     {running ? t("Running…") : t("Run Code")}
                   </button>
                   <button className="btn-primary" disabled={running} onClick={() => runCode("submit")}>{t("Submit")}</button>
+                  <select
+                    className="input ml-auto !w-36 !py-1 text-sm"
+                    value={activeLang}
+                    onChange={(e) => switchEditorLang(e.target.value)}
+                    title={t("Switch the editor language")}
+                  >
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="go">Go</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                  </select>
                 </div>
                 {execution && (
                   <div className="mt-2 max-h-36 overflow-y-auto rounded-lg bg-slate-900 p-3 font-mono text-xs text-slate-100">

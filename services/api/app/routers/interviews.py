@@ -96,8 +96,9 @@ def send_message(
 ) -> SendMessageResponse:
     session = _owned_session(session_id, user, db)
     _require_in_progress(session)
-    reply = interview_service.handle_candidate_message(db, session, body.content, body.action)
-    return SendMessageResponse(message=_message_out(reply), current_stage=session.current_stage)
+    reply, hint = interview_service.handle_candidate_message(db, session, body.content, body.action)
+    return SendMessageResponse(message=_message_out(reply), current_stage=session.current_stage,
+                               hint_content=hint)
 
 
 @router.post("/{session_id}/run-code", response_model=RunCodeResponse)

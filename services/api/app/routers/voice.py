@@ -9,17 +9,19 @@ minted here, and both sides' transcripts are posted back so the Scoring
 Agent sees the full conversation.
 """
 import io
+import json
 import wave
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..agents.llm import AgentError, _friendly_provider_error, _validated_api_key
 from ..agents.prompts import language_instruction
 from ..config import get_settings
 from ..db import get_db
-from ..models import InterviewMessage, User
+from ..models import InterviewMessage, LearningTopic, User, UserProfile, UserSkillProfile
 from ..schemas import (
     MessageOut,
     RealtimeSessionOut,
@@ -133,6 +135,30 @@ def _realtime_instructions(session, question, locale: str) -> str:
     )
 
 
+def _lesson_instructions(db: Session, user: User, topic_slug: str) -> str:
+    from ..agents.prompts import REALTIME_TUTOR_SYSTEM
+
+    profile = db.scalars(select(UserProfile).where(UserProfile.user_id == user.id)).first()
+    topic = db.scalars(select(LearningTopic).where(LearningTopic.slug == topic_slug)).first()
+    skill = None
+    if topic:
+        skill = db.scalars(select(UserSkillProfile).where(
+            UserSkillProfile.user_id == user.id, UserSkillProfile.topic_id == topic.id,
+        )).first()
+    skill_state = (
+        {"skill_level": skill.skill_level, "mastery_score": skill.mastery_score,
+         "common_mistakes": skill.common_mistakes}
+        if skill else {"skill_level": 0, "mastery_score": 0, "common_mistakes": []}
+    )
+    locale = profile.locale if profile else "en"
+    return language_instruction(locale) + REALTIME_TUTOR_SYSTEM.format(
+        topic=topic.name if topic else topic_slug,
+        level=profile.target_level if profile else "mid",
+        role=profile.target_role if profile else "Software Engineer",
+        skill_state=json.dumps(skill_state),
+    )
+
+
 def _realtime_tools() -> list[dict]:
     from ..agents.interviewer import STAGES
 
@@ -174,8 +200,13 @@ def realtime_session(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RealtimeSessionOut:
-    session = _owned_session(body.interview_id, user, db)
-    _require_in_progress(session)
+    if bool(body.interview_id) == bool(body.topic_slug):
+        raise HTTPException(status_code=422,
+                            detail="Provide exactly one of interview_id or topic_slug")
+    tools: list[dict] = []
+    if body.interview_id:
+        session = _owned_session(body.interview_id, user, db)
+        _require_in_progress(session)
     settings = get_settings()
     if not settings.ai_enabled:
         raise AgentError(
@@ -186,7 +217,12 @@ def realtime_session(
 
     key = _validated_api_key(settings)
     base_url = settings.resolved_base_url or "https://api.openai.com/v1"
-    instructions = _realtime_instructions(session, session.question, _locale(db, user.id))
+    if body.interview_id:
+        instructions = _realtime_instructions(session, session.question, _locale(db, user.id))
+        tools = _realtime_tools()
+    else:
+        # Voice tutor lesson: no stage machine, no tools — just teaching.
+        instructions = _lesson_instructions(db, user, body.topic_slug)
     try:
         resp = httpx.post(
             f"{base_url}/realtime/client_secrets",
@@ -197,8 +233,7 @@ def realtime_session(
                     "type": "realtime",
                     "model": settings.voice_realtime_model,
                     "instructions": instructions,
-                    "tools": _realtime_tools(),
-                    "tool_choice": "auto",
+                    **({"tools": tools, "tool_choice": "auto"} if tools else {}),
                     "audio": {
                         "input": {"transcription": {"model": settings.voice_stt_model}},
                         "output": {"voice": settings.voice_tts_voice},

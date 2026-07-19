@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import type { Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
+import SpeedSelect from "@/components/SpeedSelect";
 
 const CATEGORIES = [
   { id: "coding", name: "Coding" },
@@ -75,7 +76,11 @@ export default function LearnPage() {
     appendTo(slug, { role: "user", text: message });
     setInput("");
     try {
-      const resp = await api.coachChat(message, mode, slug);
+      const history = (chats[slug] ?? []).slice(-12).map((m) => ({
+        role: m.role === "coach" ? ("assistant" as const) : ("user" as const),
+        content: m.text,
+      }));
+      const resp = await api.coachChat(message, mode, slug, history);
       appendTo(slug, { role: "coach", text: resp.reply });
       if (speaker.enabled) speaker.speak(resp.reply);
     } catch (e) {
@@ -114,10 +119,16 @@ export default function LearnPage() {
               </div>
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-xs text-slate-500">{tr("Mastery")} {t.mastery?.mastery_score ?? 0}/100</p>
-                <Link href={`/quiz/${t.slug}`} onClick={(e) => e.stopPropagation()}
-                  className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
-                  {tr("Chapter quiz →")}
-                </Link>
+                <div className="flex gap-1">
+                  <Link href={`/tutor/${t.slug}`} onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100">
+                    {tr("Lesson →")}
+                  </Link>
+                  <Link href={`/quiz/${t.slug}`} onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
+                    {tr("Chapter quiz →")}
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
@@ -128,13 +139,16 @@ export default function LearnPage() {
             <h2 className="font-semibold">
               {tr("Coach")}{selected ? ` — ${selected.name}` : ""}
             </h2>
-            <button
-              className={`rounded-full border px-2.5 py-0.5 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
-              onClick={() => speaker.setEnabled(!speaker.enabled)}
-              title={tr("Read the coach's replies aloud")}
-            >
-              {speaker.enabled ? "🔊" : "🔇"} {tr("Auto-read")}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                className={`rounded-full border px-2.5 py-0.5 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
+                onClick={() => speaker.setEnabled(!speaker.enabled)}
+                title={tr("Read the coach's replies aloud")}
+              >
+                {speaker.enabled ? "🔊" : "🔇"} {tr("Auto-read")}
+              </button>
+              <SpeedSelect rate={speaker.rate} onChange={speaker.setRate} />
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {["explain", "quiz", "flashcards", "review_mistakes"].map((m) => (

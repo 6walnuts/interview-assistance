@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from .db import Base, SessionLocal, engine
 from .models import LearningTopic, Question, QuizQuestion
+from .seed_questions import CLASSIC_QUESTIONS
 
 TOPICS: list[dict] = [
     # coding
@@ -35,6 +36,7 @@ TOPICS: list[dict] = [
     # cs fundamentals
     {"slug": "concurrency", "name": "Concurrency & Locks", "category": "cs_fundamentals", "difficulty": 3},
     {"slug": "tcp-http", "name": "TCP / HTTP", "category": "cs_fundamentals", "difficulty": 2},
+    {"slug": "ood", "name": "Object-Oriented Design", "category": "cs_fundamentals", "difficulty": 2},
     # infrastructure
     {"slug": "kafka", "name": "Kafka", "category": "infrastructure", "difficulty": 3},
     {"slug": "kubernetes", "name": "Kubernetes", "category": "infrastructure", "difficulty": 3},
@@ -164,7 +166,7 @@ def seed(db: Session) -> None:
         if not db.scalars(select(LearningTopic).where(LearningTopic.slug == t["slug"])).first():
             db.add(LearningTopic(**t))
     db.flush()
-    for q in QUESTIONS:
+    for q in [*QUESTIONS, *CLASSIC_QUESTIONS]:
         if not db.scalars(select(Question).where(Question.title == q["title"])).first():
             db.add(Question(**q))
     for quiz in QUIZ:

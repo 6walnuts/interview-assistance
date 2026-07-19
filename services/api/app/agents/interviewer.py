@@ -38,6 +38,12 @@ def _mock_turn(session: InterviewSession, action: str) -> InterviewerTurn:
             message="I won't give it away, but consider what happens at the boundaries of "
                     "your input — what case are you not handling yet?",
             stage=current,  # hints do not advance the stage
+            hint_content=(
+                "# Hint skeleton (mock)\n"
+                "def solve(data):\n"
+                "    # TODO: handle the empty input case first\n"
+                "    # TODO: what happens at the last element?\n"
+                "    ...\n"),
             internal_observation=InternalObservation(
                 candidate_signal="asked for a hint", hint_level=level,
                 recommended_follow_up="check if the hint unblocks them"),

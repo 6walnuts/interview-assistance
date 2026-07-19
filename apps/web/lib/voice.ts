@@ -5,6 +5,23 @@ import { getToken } from "./api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const AUTO_READ_KEY = "aic_voice_auto_read";
+const RATE_KEY = "aic_voice_rate";
+
+export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const;
+
+/**
+ * Text sent to TTS, with code stripped: fenced blocks (including an unclosed
+ * trailing fence) are dropped entirely — listening to code read aloud is
+ * noise — and inline backticks keep their text without the ticks.
+ */
+export function stripCodeForSpeech(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/```[\s\S]*$/, " ")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\s{3,}/g, " ")
+    .trim();
+}
 
 async function authFetch(path: string, init: RequestInit): Promise<Response> {
   const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
@@ -97,17 +114,32 @@ export function useVoiceInput(
   return { recording, transcribing, toggle };
 }
 
-/** Text-to-speech playback with a persisted auto-read preference. */
+/** Text-to-speech playback with persisted auto-read and speed preferences. */
 export function useSpeaker(onError?: (msg: string) => void) {
   const [enabled, setEnabledState] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [rate, setRateState] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
+  const rateRef = useRef(1);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
 
   useEffect(() => {
     setEnabledState(localStorage.getItem(AUTO_READ_KEY) === "1");
+    const saved = Number.parseFloat(localStorage.getItem(RATE_KEY) ?? "1");
+    if (PLAYBACK_RATES.includes(saved as (typeof PLAYBACK_RATES)[number])) {
+      setRateState(saved);
+      rateRef.current = saved;
+    }
+  }, []);
+
+  const setRate = useCallback((r: number) => {
+    setRateState(r);
+    rateRef.current = r;
+    localStorage.setItem(RATE_KEY, String(r));
+    // Apply immediately to whatever is currently playing.
+    if (audioRef.current) audioRef.current.playbackRate = r;
   }, []);
 
   const stop = useCallback(() => {
@@ -132,15 +164,17 @@ export function useSpeaker(onError?: (msg: string) => void) {
   const speak = useCallback(
     async (text: string) => {
       stop();
-      if (!text.trim()) return;
+      const speakable = stripCodeForSpeech(text);
+      if (!speakable) return;
       try {
         const resp = await authFetch("/api/voice/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text: speakable }),
         });
         const url = URL.createObjectURL(await resp.blob());
         const audio = new Audio(url);
+        audio.playbackRate = rateRef.current;
         urlRef.current = url;
         audioRef.current = audio;
         audio.onended = audio.onerror = () => {
@@ -158,5 +192,5 @@ export function useSpeaker(onError?: (msg: string) => void) {
 
   useEffect(() => stop, [stop]);
 
-  return { enabled, setEnabled, speak, speaking, stop };
+  return { enabled, setEnabled, speak, speaking, stop, rate, setRate };
 }

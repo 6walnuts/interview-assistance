@@ -150,6 +150,14 @@ cd services/api && .venv/bin/python -m pytest tests -q
 
 覆盖：认证、权限隔离、完整面试闭环（创建 → 对话 → 提示 → 跑代码 → 结束 → 报告 → 自动生成 ≥3 学习任务 → 幂等）、任务完成更新 Mastery、进度接口。
 
+## 系统设计经典题库
+
+`app/seed_questions.py` 内置 44 道原创出题的经典系统设计题（覆盖业界高频主题：
+短链接、KV 存储、消息队列、支付、交易所等基础设施题，以及视觉搜索、推荐系统、
+RAG、文生图等 ML/GenAI 系统设计题）。每道题带量化约束和评分 rubric——rubric
+就是 Scoring Agent 的期望讨论点清单。新建 system_design 面试时按难度 + 重点领域
+从题库抽题；重跑 `python -m app.seed` 即可幂等地把新题合入已有数据库。
+
 ## 学习路线与章节测试
 
 - **学习路线**：Onboarding 完成后自动调用 Learning Planner Agent，按面试日期和每周可投入时间生成分周任务序列（`POST /api/plan/generate`，Tasks 页按 Week 分组展示，可随时重新生成，已完成任务保留为历史）。
