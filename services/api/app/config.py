@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # so the full loop runs offline and in tests.
     mock_ai: bool = False
 
+    # Voice (speech-to-text / text-to-speech). Uses OpenAI audio APIs, so it
+    # only works with llm_provider=openai; mock mode returns canned output.
+    voice_stt_model: str = "gpt-4o-mini-transcribe"
+    voice_tts_model: str = "gpt-4o-mini-tts"
+    voice_tts_voice: str = "alloy"
+
     # "docker" (safe, default) or "subprocess" (dev-only, no isolation).
     # Docker mode uses per-language images: ai-coach-sandbox-{python,javascript,
     # go,java,cpp} — build them with infra/sandbox/build.sh.

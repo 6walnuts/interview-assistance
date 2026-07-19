@@ -329,3 +329,13 @@ class CoachChatRequest(BaseModel):
 class CoachChatResponse(BaseModel):
     reply: str
     suggested_actions: list[str]
+
+
+# ---------- voice ----------
+class TranscriptionOut(BaseModel):
+    text: str
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=8000)
+    voice: str | None = None

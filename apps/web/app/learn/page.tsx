@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
 import type { Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { useSpeaker, useVoiceInput } from "@/lib/voice";
 
 const CATEGORIES = [
   { id: "coding", name: "Coding" },
@@ -30,6 +31,12 @@ export default function LearnPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const speaker = useSpeaker(setError);
+  const voice = useVoiceInput(
+    useCallback((text: string) => setInput((v) => (v ? `${v} ${text}` : text)), []),
+    setError
+  );
 
   const chat = selected ? chats[selected.slug] ?? [] : [];
 
@@ -69,6 +76,7 @@ export default function LearnPage() {
     try {
       const resp = await api.coachChat(message, mode, slug);
       appendTo(slug, { role: "coach", text: resp.reply });
+      if (speaker.enabled) speaker.speak(resp.reply);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Coach unavailable");
     } finally {
@@ -115,9 +123,18 @@ export default function LearnPage() {
         </div>
 
         <div className="card flex h-[32rem] flex-col">
-          <h2 className="font-semibold">
-            {tr("Coach")}{selected ? ` — ${selected.name}` : ""}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">
+              {tr("Coach")}{selected ? ` — ${selected.name}` : ""}
+            </h2>
+            <button
+              className={`rounded-full border px-2.5 py-0.5 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
+              onClick={() => speaker.setEnabled(!speaker.enabled)}
+              title={tr("Read the coach's replies aloud")}
+            >
+              {speaker.enabled ? "🔊" : "🔇"} {tr("Auto-read")}
+            </button>
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {["explain", "quiz", "flashcards", "review_mistakes"].map((m) => (
               <button key={m} className="btn-secondary !px-2 !py-1 text-xs" disabled={!selected || busy}
@@ -143,6 +160,14 @@ export default function LearnPage() {
             <input className="input" placeholder={tr("Ask the coach…")} value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && ask(input)} disabled={!selected} />
+            <button
+              className={voice.recording ? "rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white" : "btn-secondary"}
+              disabled={!selected || busy || voice.transcribing}
+              onClick={voice.toggle}
+              title={voice.recording ? tr("Stop recording") : tr("Voice input")}
+            >
+              {voice.recording ? "⏹" : voice.transcribing ? "…" : "🎙"}
+            </button>
             <button className="btn-primary" disabled={!selected || busy || !input.trim()} onClick={() => ask(input)}>{tr("Send")}</button>
           </div>
         </div>

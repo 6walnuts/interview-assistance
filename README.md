@@ -155,6 +155,15 @@ cd services/api && .venv/bin/python -m pytest tests -q
 - **学习路线**：Onboarding 完成后自动调用 Learning Planner Agent，按面试日期和每周可投入时间生成分周任务序列（`POST /api/plan/generate`，Tasks 页按 Week 分组展示，可随时重新生成，已完成任务保留为历史）。
 - **章节测试**：每个知识点有独立题库（`GET /api/quiz/{topic_slug}`），题目不足时由 Quiz Generator Agent 自动补题入库；提交判分（`POST /api/quiz/{topic_slug}/submit`）后更新 Mastery、记录错题到 common_mistakes，得分 ≥60% 自动完成对应的学习任务。
 
+## 语音输入与朗读
+
+面试房间和 Learn 页教练面板都支持语音（走 OpenAI 语音 API，需 `LLM_PROVIDER=openai`）：
+
+- **🎙 语音输入**：点击麦克风开始录音，再点停止，录音自动转文字填入输入框（`POST /api/voice/transcribe`，模型 `gpt-4o-mini-transcribe`，约 $0.003/分钟）。
+- **🔊 自动朗读**：打开开关后，面试官/教练的回复自动朗读（`POST /api/voice/tts`，模型 `gpt-4o-mini-tts`，约 $0.015/分钟；音色用 `VOICE_TTS_VOICE` 配置）。
+- `MOCK_AI=true` 时两个接口返回固定转写文本和一段静音 WAV，离线/测试可用。
+- 浏览器会请求麦克风权限；`localhost` 下 Chrome/Edge/Safari 均可直接使用。
+
 ## 核心闭环（一条链路）
 
 ```

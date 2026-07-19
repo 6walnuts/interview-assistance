@@ -96,6 +96,14 @@ const DICT: Record<string, [string, string]> = {
   "flashcards": ["记忆卡", "tarjetas"],
   "review mistakes": ["错题复习", "repasar errores"],
 
+  // Voice
+  "Voice input": ["语音输入", "Entrada de voz"],
+  "Stop recording": ["停止录音", "Detener grabación"],
+  "Transcribing…": ["转写中…", "Transcribiendo…"],
+  "Auto-read": ["自动朗读", "Leer en voz alta"],
+  "Read the interviewer's replies aloud": ["自动朗读面试官的回复", "Leer en voz alta las respuestas del entrevistador"],
+  "Read the coach's replies aloud": ["自动朗读教练的回复", "Leer en voz alta las respuestas del coach"],
+
   // Practice page
   "Short, targeted sessions — 5, 15 or 30 minutes.":
     ["短小精准的练习——5、15 或 30 分钟。", "Sesiones cortas y enfocadas: 5, 15 o 30 minutos."],

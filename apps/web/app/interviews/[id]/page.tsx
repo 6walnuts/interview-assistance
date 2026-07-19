@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Execution, InterviewDetail, Message } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { useSpeaker, useVoiceInput } from "@/lib/voice";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -85,6 +86,12 @@ export default function InterviewRoomPage() {
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const speaker = useSpeaker(setError);
+  const voice = useVoiceInput(
+    useCallback((text: string) => setInput((v) => (v ? `${v} ${text}` : text)), []),
+    setError
+  );
+
   // Draft autosave: restore unsent code/design for this session, then persist
   // every edit so a page refresh never loses work.
   const draftsLoaded = useRef(false);
@@ -148,13 +155,14 @@ export default function InterviewRoomPage() {
         const resp = await api.sendMessage(id, content, action);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
+        if (speaker.enabled) speaker.speak(resp.message.content);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to send");
       } finally {
         setBusy(false);
       }
     },
-    [busy, id, stage]
+    [busy, id, stage, speaker.enabled, speaker.speak]
   );
 
   async function runCode(label: "run" | "submit") {
@@ -213,6 +221,13 @@ export default function InterviewRoomPage() {
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{detail.session.role} · {detail.session.level}</span>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            className={`rounded-full border px-3 py-1 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
+            onClick={() => speaker.setEnabled(!speaker.enabled)}
+            title={t("Read the interviewer's replies aloud")}
+          >
+            {speaker.enabled ? "🔊" : "🔇"} {t("Auto-read")}
+          </button>
           <span className={`text-sm font-mono ${remaining !== null && remaining < 5 * 60_000 ? "text-red-600" : "text-slate-600"}`}>
             ⏱ {minutes}:{seconds}
           </span>
@@ -261,6 +276,14 @@ export default function InterviewRoomPage() {
             />
             <div className="mt-2 flex gap-2">
               <button className="btn-primary" disabled={busy || !input.trim()} onClick={() => send(input, "message")}>{t("Send")}</button>
+              <button
+                className={voice.recording ? "rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white" : "btn-secondary"}
+                disabled={busy || voice.transcribing}
+                onClick={voice.toggle}
+                title={voice.recording ? t("Stop recording") : t("Voice input")}
+              >
+                {voice.recording ? `⏹ ${t("Stop recording")}` : voice.transcribing ? t("Transcribing…") : "🎙"}
+              </button>
               <button className="btn-secondary" disabled={busy || !input.trim()} onClick={() => send(input, "ask_clarification")}>{t("Ask Clarification")}</button>
               <button className="btn-secondary" disabled={busy} onClick={() => send(t("Could I get a hint?"), "request_hint")}>{t("Request Hint")}</button>
             </div>
