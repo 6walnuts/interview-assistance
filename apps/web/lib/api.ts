@@ -115,10 +115,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ content, action }),
     }),
-  runCode: (id: string, code: string, label: "run" | "submit") =>
+  runCode: (id: string, code: string, label: "run" | "submit", language = "python") =>
     request<{ execution: Execution }>(`/api/interviews/${id}/run-code`, {
       method: "POST",
-      body: JSON.stringify({ code, language: "python", label }),
+      body: JSON.stringify({ code, language, label }),
     }),
   endInterview: (id: string) =>
     request<{ report_id: string; review_task_count: number }>(`/api/interviews/${id}/end`, {

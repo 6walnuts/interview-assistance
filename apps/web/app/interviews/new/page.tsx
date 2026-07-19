@@ -18,6 +18,7 @@ export default function InterviewSetupPage() {
   const [company, setCompany] = useState("Generic Big Tech");
   const [duration, setDuration] = useState(45);
   const [difficulty, setDifficulty] = useState("medium");
+  const [language, setLanguage] = useState("python");
   const [focus, setFocus] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export default function InterviewSetupPage() {
     try {
       const resp = await api.createInterview({
         interview_type: interviewType, role, level, company_style: company,
-        duration_minutes: duration, difficulty, language: "python", focus_areas: focus,
+        duration_minutes: duration, difficulty, language, focus_areas: focus,
       });
       router.push(`/interviews/${resp.session.id}`);
     } catch (err) {
@@ -90,7 +91,13 @@ export default function InterviewSetupPage() {
           </div>
           <div>
             <label className="label">Language</label>
-            <select className="input" defaultValue="python"><option value="python">Python</option></select>
+            <select className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="go">Go</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
           </div>
         </div>
         <div>

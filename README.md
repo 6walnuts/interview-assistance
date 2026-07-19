@@ -84,13 +84,20 @@ npm run dev                 # http://localhost:3000
 
 ### 3. 代码沙箱（可选，Coding 面试的安全执行）
 
+支持 **Python / JavaScript / Go / Java / C++** 五种语言：
+
 ```bash
-docker build -t ai-coach-sandbox:latest infra/sandbox
+infra/sandbox/build.sh    # 构建全部 5 个语言镜像
 # services/api/.env 中设置 SANDBOX_MODE=docker（默认）
-# 无 Docker 的本地开发可设 SANDBOX_MODE=subprocess（无隔离，仅限开发）
+# 无 Docker 的本地开发可设 SANDBOX_MODE=subprocess（无隔离，仅限开发；
+# 需要本机装有对应工具链 python3/node/go/javac/g++）
 ```
 
-沙箱限制：禁网（`--network none`）、CPU/内存上限、`--pids-limit`（防 fork bomb）、只读根文件系统、nobody 用户、不传入任何环境变量、宿主侧超时 kill（防死循环）。
+- Python 和 JavaScript：题目测试用例自动判分
+- Go / Java / C++：编译后运行完整程序（CoderPad 模式），候选人在 main 里自测，
+  编译错误和输出原样返回；面试官与评分 Agent 依据代码 + 输出评估
+
+沙箱限制：禁网（`--network none`）、CPU/内存上限（编译型语言放宽到 512-768m）、`--pids-limit`（防 fork bomb）、只读根文件系统 + 可执行 tmpfs（编译产物）、nobody 用户、不传入宿主环境变量、宿主侧超时 kill（编译型语言额外加 20-30s 编译余量）。
 
 ### 4. 全套 Docker（Postgres + Redis + API）
 

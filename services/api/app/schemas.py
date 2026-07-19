@@ -167,7 +167,7 @@ class SendMessageResponse(BaseModel):
 
 class RunCodeRequest(BaseModel):
     code: str = Field(min_length=1, max_length=50_000)
-    language: Literal["python"] = "python"
+    language: Literal["python", "javascript", "go", "java", "cpp"] = "python"
     label: Literal["run", "submit"] = "run"
 
 

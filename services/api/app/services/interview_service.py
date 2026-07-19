@@ -21,7 +21,7 @@ from ..models import (
     UserProfile,
     UserSkillProfile,
 )
-from .sandbox import ExecutionResult, run_python
+from .sandbox import ExecutionResult, run_code as sandbox_run_code
 
 
 def _now() -> datetime:
@@ -109,7 +109,7 @@ def run_code(
     db.flush()
 
     test_cases = session.question.test_cases if session.question else []
-    result = run_python(code, test_cases)
+    result = sandbox_run_code(code, language, test_cases)
 
     db.add(CodeExecutionResult(
         session_id=session.id, code_version_id=version.id,

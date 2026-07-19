@@ -37,9 +37,10 @@ class Settings(BaseSettings):
     # so the full loop runs offline and in tests.
     mock_ai: bool = False
 
-    # "docker" (safe, default) or "subprocess" (dev-only, no isolation)
+    # "docker" (safe, default) or "subprocess" (dev-only, no isolation).
+    # Docker mode uses per-language images: ai-coach-sandbox-{python,javascript,
+    # go,java,cpp} — build them with infra/sandbox/build.sh.
     sandbox_mode: str = "docker"
-    sandbox_image: str = "ai-coach-sandbox:latest"
     sandbox_timeout_seconds: int = 10
     sandbox_memory: str = "256m"
     sandbox_cpus: str = "0.5"

@@ -22,6 +22,51 @@ const STAGES = [
   "coding", "testing", "complexity", "optimization", "follow_up", "candidate_questions", "finish",
 ];
 
+// Per-language editor setup. `harness: true` languages run the question's test
+// cases automatically; the others run as a complete program (CoderPad style).
+const LANGUAGE_SETUP: Record<string, { monaco: string; starter: string; harness: boolean }> = {
+  python: { monaco: "python", harness: true, starter: "# Write your solution here\n" },
+  javascript: {
+    monaco: "javascript", harness: true,
+    starter: "// Write your solution here (keep the function name from the problem)\n",
+  },
+  go: {
+    monaco: "go", harness: false,
+    starter: `package main
+
+import "fmt"
+
+// Tests are not auto-run for Go — call your solution from main and print results.
+func main() {
+\tfmt.Println("hello")
+}
+`,
+  },
+  java: {
+    monaco: "java", harness: false,
+    starter: `// Class must be named Main. Tests are not auto-run for Java —
+// call your solution from main and print results.
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("hello");
+    }
+}
+`,
+  },
+  cpp: {
+    monaco: "cpp", harness: false,
+    starter: `#include <bits/stdc++.h>
+using namespace std;
+
+// Tests are not auto-run for C++ — call your solution from main and print results.
+int main() {
+    cout << "hello" << endl;
+    return 0;
+}
+`,
+  },
+};
+
 export default function InterviewRoomPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -61,6 +106,12 @@ export default function InterviewRoomPage() {
         setDetail(d);
         setMessages(d.messages);
         setStage(d.session.current_stage);
+        const setup = LANGUAGE_SETUP[d.session.language] ?? LANGUAGE_SETUP.python;
+        setCode((current) =>
+          current === LANGUAGE_SETUP.python.starter || current === "# Write your solution here\n"
+            ? setup.starter
+            : current
+        );
         const started = new Date(d.session.started_at).getTime();
         const total = d.session.duration_minutes * 60_000;
         setRemaining(Math.max(0, started + total - Date.now()));
@@ -105,15 +156,18 @@ export default function InterviewRoomPage() {
   );
 
   async function runCode(label: "run" | "submit") {
+    const lang = detail?.session.language ?? "python";
     setRunning(true);
     setError(null);
     try {
-      const resp = await api.runCode(id, code, label);
+      const resp = await api.runCode(id, code, label, lang);
       setExecution(resp.execution);
       if (label === "submit") {
-        const passed = resp.execution.test_results.filter((t) => t.passed).length;
+        const summary = resp.execution.test_results.length
+          ? `Test results: ${resp.execution.test_results.filter((t) => t.passed).length}/${resp.execution.test_results.length} passed.`
+          : `Program exited with code ${resp.execution.exit_code}. Output:\n${resp.execution.stdout.slice(0, 500)}`;
         await send(
-          `I'm submitting my solution. Test results: ${passed}/${resp.execution.test_results.length} passed.\n\n\`\`\`python\n${code}\n\`\`\``,
+          `I'm submitting my solution. ${summary}\n\n\`\`\`${lang}\n${code}\n\`\`\``,
           "message"
         );
       }
@@ -227,7 +281,7 @@ export default function InterviewRoomPage() {
             <>
               <div className="flex-1">
                 <MonacoEditor
-                  language="python"
+                  language={(LANGUAGE_SETUP[detail.session.language] ?? LANGUAGE_SETUP.python).monaco}
                   value={code}
                   onChange={(v) => setCode(v ?? "")}
                   options={{ minimap: { enabled: false }, fontSize: 14, scrollBeyondLastLine: false }}
@@ -242,6 +296,9 @@ export default function InterviewRoomPage() {
                 </div>
                 {execution && (
                   <div className="mt-2 max-h-36 overflow-y-auto rounded-lg bg-slate-900 p-3 font-mono text-xs text-slate-100">
+                    {execution.test_results.length === 0 && execution.exit_code === 0 && !execution.timed_out && (
+                      <p className="text-slate-400">exit 0 · {execution.duration_ms}ms</p>
+                    )}
                     {execution.test_results.map((t) => (
                       <p key={t.name} className={t.passed ? "text-green-400" : "text-red-400"}>
                         {t.passed ? "✓" : "✗"} {t.name}{t.detail ? ` — ${t.detail}` : ""}
