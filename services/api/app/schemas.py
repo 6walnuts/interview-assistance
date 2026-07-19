@@ -172,6 +172,9 @@ class InterviewDetail(BaseModel):
 class SendMessageRequest(BaseModel):
     content: str = Field(min_length=1, max_length=8000)
     action: Literal["message", "ask_clarification", "request_hint"] = "message"
+    # Editor contents sent with hint requests so the hint builds on the
+    # candidate's own code instead of a generic skeleton.
+    current_code: str = Field(default="", max_length=50_000)
 
 
 class SendMessageResponse(BaseModel):

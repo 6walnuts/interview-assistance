@@ -96,7 +96,8 @@ def send_message(
 ) -> SendMessageResponse:
     session = _owned_session(session_id, user, db)
     _require_in_progress(session)
-    reply, hint = interview_service.handle_candidate_message(db, session, body.content, body.action)
+    reply, hint = interview_service.handle_candidate_message(
+        db, session, body.content, body.action, current_code=body.current_code)
     return SendMessageResponse(message=_message_out(reply), current_stage=session.current_stage,
                                hint_content=hint)
 

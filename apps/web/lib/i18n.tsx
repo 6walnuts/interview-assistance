@@ -124,6 +124,8 @@ const DICT: Record<string, [string, string]> = {
   "Practice editor": ["练习编辑器", "Editor de práctica"],
   "Hint": ["提示", "Pista"],
   "Dismiss": ["关闭", "Cerrar"],
+  "(applied to your editor)": ["（已应用到编辑器）", "(aplicada a tu editor)"],
+  "Restore my code": ["还原我的代码", "Restaurar mi código"],
   "Insert into editor": ["插入编辑器", "Insertar en el editor"],
   "Ask for a hint on the current exercise": ["就当前练习要一个提示", "Pide una pista sobre el ejercicio actual"],
   "Share with tutor": ["发给老师点评", "Compartir con el tutor"],
