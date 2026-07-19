@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import type { Execution, Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
+import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -63,6 +64,11 @@ export default function TutorPage() {
 
   const storageKey = `aic_tutor_${slug}`;
 
+  // Live voice lesson (WebRTC to OpenAI Realtime, tutor persona, no tools).
+  // Transcripts land in the lesson chat, so text and voice share one history.
+  const [callState, setCallState] = useState<"idle" | "connecting" | "live">("idle");
+  const callRef = useRef<RealtimeConnection | null>(null);
+
   const persist = useCallback(
     (msgs: ChatMsg[]) => {
       try {
@@ -100,6 +106,42 @@ export default function TutorPage() {
     },
     [persist, slug, speaker.enabled, speaker.speak]
   );
+
+  const appendVoiceLine = useCallback(
+    (role: "user" | "coach", text: string) => {
+      setChat((c) => {
+        const next: ChatMsg[] = [...c, { role, text }];
+        persist(next);
+        return next;
+      });
+    },
+    [persist]
+  );
+
+  const toggleCall = useCallback(async () => {
+    if (callRef.current) {
+      callRef.current.stop();
+      callRef.current = null;
+      return;
+    }
+    setError(null);
+    try {
+      callRef.current = await startRealtimeCall({ topicSlug: slug }, {
+        onUserTranscript: (text) => appendVoiceLine("user", text),
+        onAssistantTranscript: (text) => appendVoiceLine("coach", text),
+        onStateChange: (s) => {
+          setCallState(s === "closed" ? "idle" : s);
+          if (s === "closed") callRef.current = null;
+        },
+        onError: setError,
+      });
+    } catch (e) {
+      setCallState("idle");
+      setError(e instanceof Error ? e.message : "Voice call failed");
+    }
+  }, [slug, appendVoiceLine]);
+
+  useEffect(() => () => callRef.current?.stop(), []);
 
   useEffect(() => {
     api.listTopics()
@@ -153,6 +195,8 @@ export default function TutorPage() {
 
   function restartLesson() {
     if (!window.confirm(t("Restart this lesson? The current conversation will be cleared."))) return;
+    callRef.current?.stop();
+    callRef.current = null;
     persist([]);
     setChat([]);
     void ask("Start the lesson from the beginning.", []);
@@ -167,6 +211,18 @@ export default function TutorPage() {
           {topic && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">D{topic.difficulty}</span>}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            className={`rounded-full border px-3 py-1 text-xs ${
+              callState === "live"
+                ? "animate-pulse border-red-600 bg-red-50 font-semibold text-red-700"
+                : "border-slate-300 text-slate-500"
+            }`}
+            onClick={toggleCall}
+            disabled={callState === "connecting"}
+            title={t("Talk to the tutor in a live voice call — everything is transcribed into the lesson")}
+          >
+            {callState === "live" ? `📞 ${t("Hang up")}` : callState === "connecting" ? t("Connecting…") : `📞 ${t("Voice call")}`}
+          </button>
           <button
             className={`rounded-full border px-3 py-1 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
             onClick={() => speaker.setEnabled(!speaker.enabled)}

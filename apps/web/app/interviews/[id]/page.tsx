@@ -123,7 +123,7 @@ export default function InterviewRoomPage() {
     }
     setError(null);
     try {
-      callRef.current = await startRealtimeCall(id, {
+      callRef.current = await startRealtimeCall({ interviewId: id }, {
         onUserTranscript: (text) => addVoiceLine("candidate", text),
         onAssistantTranscript: (text) => addVoiceLine("interviewer", text),
         onToolCall: async (name, args) => {

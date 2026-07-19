@@ -5,15 +5,16 @@ import { getToken } from "./api";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export interface RealtimeHandlers {
-  /** Final transcript of something the candidate said. */
+  /** Final transcript of something the user said. */
   onUserTranscript: (text: string) => void;
-  /** Final transcript of something the interviewer said. */
+  /** Final transcript of something the AI said. */
   onAssistantTranscript: (text: string) => void;
   /**
-   * The interviewer model called a tool (advance_stage / record_observation).
-   * Execute it against the backend and return the result object to feed back.
+   * The model called a tool (interview calls: advance_stage /
+   * record_observation). Execute it against the backend and return the result
+   * object to feed back. Omit for calls without tools (tutor lessons).
    */
-  onToolCall: (name: string, args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  onToolCall?: (name: string, args: Record<string, unknown>) => Promise<Record<string, unknown>>;
   onStateChange: (state: "connecting" | "live" | "closed") => void;
   onError: (msg: string) => void;
 }
@@ -22,13 +23,16 @@ export interface RealtimeConnection {
   stop: () => void;
 }
 
+/** What to talk to: a mock interview session, or a tutor lesson on a topic. */
+export type RealtimeTarget = { interviewId: string } | { topicSlug: string };
+
 /**
  * Live voice call: mints an ephemeral secret from our backend, then connects
  * the browser straight to OpenAI's Realtime API over WebRTC. Transcript events
  * stream back over the data channel.
  */
 export async function startRealtimeCall(
-  interviewId: string,
+  target: RealtimeTarget,
   handlers: RealtimeHandlers
 ): Promise<RealtimeConnection> {
   handlers.onStateChange("connecting");
@@ -39,7 +43,10 @@ export async function startRealtimeCall(
   const tokenResp = await fetch(`${API_URL}/api/voice/realtime-session`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ interview_id: interviewId }),
+    body: JSON.stringify({
+      interview_id: "interviewId" in target ? target.interviewId : null,
+      topic_slug: "topicSlug" in target ? target.topicSlug : null,
+    }),
   });
   if (!tokenResp.ok) {
     let detail = tokenResp.statusText;
@@ -93,6 +100,7 @@ export async function startRealtimeCall(
     const runToolCall = async (name: string, argsRaw: string, callId: string) => {
       let result: Record<string, unknown>;
       try {
+        if (!handlers.onToolCall) throw new Error(`no tool handler for '${name}'`);
         const args = argsRaw ? (JSON.parse(argsRaw) as Record<string, unknown>) : {};
         result = await handlers.onToolCall(name, args);
       } catch (err) {

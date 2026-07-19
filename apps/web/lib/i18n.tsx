@@ -122,6 +122,9 @@ const DICT: Record<string, [string, string]> = {
   "Talk to the interviewer in a live voice call — everything is transcribed into the chat":
     ["和面试官实时语音对话——内容会自动转成字幕进入聊天记录",
      "Habla con el entrevistador en una llamada de voz en vivo: todo se transcribe al chat"],
+  "Talk to the tutor in a live voice call — everything is transcribed into the lesson":
+    ["和老师实时语音对话——内容会自动转成字幕进入课程记录",
+     "Habla con el tutor en una llamada de voz en vivo: todo se transcribe a la lección"],
 
   // Practice page
   "Short, targeted sessions — 5, 15 or 30 minutes.":

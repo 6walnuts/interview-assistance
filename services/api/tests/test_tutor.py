@@ -36,3 +36,17 @@ def test_scratch_run_python(client, auth_headers):
 
 def test_scratch_run_requires_auth(client):
     assert client.post("/api/code/run", json={"code": "print(1)"}).status_code == 401
+
+
+def test_lesson_realtime_session_needs_real_key(client, auth_headers):
+    resp = client.post("/api/voice/realtime-session",
+                       json={"topic_slug": "binary-search"}, headers=auth_headers)
+    assert resp.status_code == 502
+    assert "OpenAI" in resp.json()["detail"]
+
+
+def test_realtime_session_requires_exactly_one_target(client, auth_headers):
+    assert client.post("/api/voice/realtime-session", json={}, headers=auth_headers).status_code == 422
+    assert client.post("/api/voice/realtime-session", json={
+        "interview_id": "x", "topic_slug": "y",
+    }, headers=auth_headers).status_code == 422

@@ -360,7 +360,10 @@ class TTSRequest(BaseModel):
 
 
 class RealtimeSessionRequest(BaseModel):
-    interview_id: str
+    # Exactly one target: an interview (voice interviewer with stage tools)
+    # or a topic (voice tutor lesson).
+    interview_id: str | None = None
+    topic_slug: str | None = None
 
 
 class RealtimeSessionOut(BaseModel):
