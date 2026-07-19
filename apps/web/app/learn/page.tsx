@@ -69,19 +69,45 @@ export default function LearnPage() {
     });
   }
 
+  function persistChats() {
+    setChats((all) => {
+      try {
+        localStorage.setItem(CHATS_KEY, JSON.stringify(all));
+      } catch {
+        /* keep in-memory */
+      }
+      return all;
+    });
+  }
+
+  function setLast(slug: string, text: string) {
+    setChats((all) => {
+      const msgs = all[slug] ?? [];
+      if (msgs.length === 0 || msgs[msgs.length - 1].role !== "coach") return all;
+      return { ...all, [slug]: [...msgs.slice(0, -1), { role: "coach" as const, text }] };
+    });
+  }
+
   async function ask(message: string, mode = "explain") {
     if (!message.trim() || busy || !selected) return;
     const slug = selected.slug;
     setBusy(true);
+    const history = (chats[slug] ?? []).slice(-12).map((m) => ({
+      role: m.role === "coach" ? ("assistant" as const) : ("user" as const),
+      content: m.text,
+    }));
     appendTo(slug, { role: "user", text: message });
     setInput("");
     try {
-      const history = (chats[slug] ?? []).slice(-12).map((m) => ({
-        role: m.role === "coach" ? ("assistant" as const) : ("user" as const),
-        content: m.text,
-      }));
-      const resp = await api.coachChat(message, mode, slug, history);
-      appendTo(slug, { role: "coach", text: resp.reply });
+      // Stream the reply into a live bubble.
+      appendTo(slug, { role: "coach", text: "" });
+      let streamed = "";
+      const resp = await api.streamCoachChat(message, mode, slug, history, (delta) => {
+        streamed += delta;
+        setLast(slug, streamed);
+      });
+      setLast(slug, resp.reply);
+      persistChats();
       if (speaker.enabled) speaker.speak(resp.reply);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Coach unavailable");

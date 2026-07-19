@@ -26,6 +26,7 @@ export default function OnboardingPage() {
   const [language, setLanguage] = useState("python");
   const [strengths, setStrengths] = useState<string[]>([]);
   const [weaknesses, setWeaknesses] = useState<string[]>([]);
+  const [resume, setResume] = useState("");
   const [busy, setBusy] = useState(false);
   const [planning, setPlanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export default function OnboardingPage() {
         preferred_language: language,
         strengths,
         weaknesses,
+        resume_text: resume,
         onboarding_completed: true,
       });
       // Turn the profile into a week-by-week study plan before landing.
@@ -139,6 +141,15 @@ export default function OnboardingPage() {
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <label className="label">{t("Resume (optional — paste plain text)")}</label>
+          <textarea
+            className="input h-28 resize-none text-sm"
+            placeholder={t("The interviewer will probe your claimed experience, and your study plan will target the gaps.")}
+            value={resume}
+            onChange={(e) => setResume(e.target.value)}
+          />
         </div>
         <button className="btn-primary w-full" disabled={busy}>
           {planning ? t("Building your study plan…") : busy ? t("Saving…") : t("Finish setup & build my study plan")}

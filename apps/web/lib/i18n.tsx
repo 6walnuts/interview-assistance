@@ -17,6 +17,26 @@ const DICT: Record<string, [string, string]> = {
   "Tasks": ["任务", "Tareas"],
   "Progress": ["进度", "Progreso"],
   "Sign out": ["退出登录", "Cerrar sesión"],
+  "Questions": ["题库", "Preguntas"],
+  "Question bank": ["题库", "Banco de preguntas"],
+  "questions_count": ["道题", "preguntas"],
+  "All types": ["全部类型", "Todos los tipos"],
+  "All difficulties": ["全部难度", "Todas las dificultades"],
+  "all": ["全部", "todo"],
+  "easy": ["简单", "fácil"],
+  "medium": ["中等", "media"],
+  "hard": ["困难", "difícil"],
+  "Interview with this question": ["用这道题面试", "Entrevista con esta pregunta"],
+  "Selected question": ["已选题目", "Pregunta seleccionada"],
+  "Use random question instead": ["改用随机出题", "Usar pregunta aleatoria"],
+  "Resume (optional — paste plain text)": ["简历（可选——粘贴纯文本）", "Currículum (opcional, texto plano)"],
+  "The interviewer will probe your claimed experience, and your study plan will target the gaps.":
+    ["面试官会针对你的经历追问，学习计划也会围绕简历与目标岗位的差距生成。",
+     "El entrevistador indagará en tu experiencia y tu plan de estudio se centrará en las brechas."],
+  "Resume (optional — the interviewer will probe your experience)":
+    ["简历（可选——面试官会据此追问你的项目经历）",
+     "Currículum (opcional: el entrevistador indagará en tu experiencia)"],
+  "Paste your resume as plain text…": ["把简历以纯文本粘贴到这里…", "Pega tu currículum como texto plano…"],
   "Local mode": ["单机模式", "Modo local"],
 
   // Auth

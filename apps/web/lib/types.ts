@@ -28,6 +28,16 @@ export interface Profile {
   strengths: string[];
   weaknesses: string[];
   onboarding_completed: boolean;
+  resume_text: string;
+}
+
+export interface QuestionSummary {
+  id: string;
+  title: string;
+  interview_type: string;
+  category: string;
+  difficulty: string;
+  prompt_preview: string;
 }
 
 export interface Topic {
