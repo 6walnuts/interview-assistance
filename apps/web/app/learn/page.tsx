@@ -75,7 +75,11 @@ export default function LearnPage() {
     appendTo(slug, { role: "user", text: message });
     setInput("");
     try {
-      const resp = await api.coachChat(message, mode, slug);
+      const history = (chats[slug] ?? []).slice(-12).map((m) => ({
+        role: m.role === "coach" ? ("assistant" as const) : ("user" as const),
+        content: m.text,
+      }));
+      const resp = await api.coachChat(message, mode, slug, history);
       appendTo(slug, { role: "coach", text: resp.reply });
       if (speaker.enabled) speaker.speak(resp.reply);
     } catch (e) {
@@ -114,10 +118,16 @@ export default function LearnPage() {
               </div>
               <div className="mt-1 flex items-center justify-between">
                 <p className="text-xs text-slate-500">{tr("Mastery")} {t.mastery?.mastery_score ?? 0}/100</p>
-                <Link href={`/quiz/${t.slug}`} onClick={(e) => e.stopPropagation()}
-                  className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
-                  {tr("Chapter quiz →")}
-                </Link>
+                <div className="flex gap-1">
+                  <Link href={`/tutor/${t.slug}`} onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100">
+                    {tr("Lesson →")}
+                  </Link>
+                  <Link href={`/quiz/${t.slug}`} onClick={(e) => e.stopPropagation()}
+                    className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
+                    {tr("Chapter quiz →")}
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

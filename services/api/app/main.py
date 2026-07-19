@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from .agents.llm import AgentError
 from .config import get_settings
 from .db import Base, engine
-from .routers import auth, coach, interviews, plan, profile, progress, quiz, tasks, topics, voice
+from .routers import auth, coach, code, interviews, plan, profile, progress, quiz, tasks, topics, voice
 
 
 def _apply_lightweight_migrations() -> None:
@@ -42,7 +42,7 @@ app.add_middleware(
 
 for router in (auth.router, profile.router, topics.router, tasks.router,
                interviews.router, progress.router, coach.router,
-               quiz.router, plan.router, voice.router):
+               quiz.router, plan.router, voice.router, code.router):
     app.include_router(router)
 
 

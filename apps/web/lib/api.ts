@@ -142,10 +142,21 @@ export const api = {
   generatePlan: () => request<StudyPlan>("/api/plan/generate", { method: "POST" }),
   getPlan: () => request<StudyPlan>("/api/plan"),
 
-  coachChat: (message: string, mode: string, topicSlug?: string) =>
+  coachChat: (
+    message: string,
+    mode: string,
+    topicSlug?: string,
+    history: { role: "user" | "assistant"; content: string }[] = []
+  ) =>
     request<{ reply: string; suggested_actions: string[] }>("/api/coach/chat", {
       method: "POST",
-      body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null }),
+      body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
+    }),
+
+  runScratch: (code: string, language = "python") =>
+    request<Execution>("/api/code/run", {
+      method: "POST",
+      body: JSON.stringify({ code, language }),
     }),
 
   addVoiceTranscript: (interviewId: string, role: "candidate" | "interviewer", content: string) =>
