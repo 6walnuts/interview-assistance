@@ -9,6 +9,20 @@ const RATE_KEY = "aic_voice_rate";
 
 export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const;
 
+/**
+ * Text sent to TTS, with code stripped: fenced blocks (including an unclosed
+ * trailing fence) are dropped entirely — listening to code read aloud is
+ * noise — and inline backticks keep their text without the ticks.
+ */
+export function stripCodeForSpeech(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/```[\s\S]*$/, " ")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/\s{3,}/g, " ")
+    .trim();
+}
+
 async function authFetch(path: string, init: RequestInit): Promise<Response> {
   const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
   const token = getToken();
@@ -150,12 +164,13 @@ export function useSpeaker(onError?: (msg: string) => void) {
   const speak = useCallback(
     async (text: string) => {
       stop();
-      if (!text.trim()) return;
+      const speakable = stripCodeForSpeech(text);
+      if (!speakable) return;
       try {
         const resp = await authFetch("/api/voice/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text: speakable }),
         });
         const url = URL.createObjectURL(await resp.blob());
         const audio = new Audio(url);
