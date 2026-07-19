@@ -170,7 +170,7 @@ export function useSpeaker(onError?: (msg: string) => void) {
   );
 
   const speak = useCallback(
-    async (text: string) => {
+    async (text: string, opts?: { voice?: string; waitUntilDone?: boolean }) => {
       stopPlayback();
       const seq = ++seqRef.current; // newer speech always wins
       const speakable = stripCodeForSpeech(text);
@@ -179,7 +179,10 @@ export function useSpeaker(onError?: (msg: string) => void) {
         const resp = await authFetch("/api/voice/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: speakable }),
+          body: JSON.stringify({
+            text: speakable,
+            ...(opts?.voice ? { voice: opts.voice } : {}),
+          }),
         });
         const blob = await resp.blob();
         if (seq !== seqRef.current) return; // superseded while fetching
@@ -188,11 +191,17 @@ export function useSpeaker(onError?: (msg: string) => void) {
         audio.playbackRate = rateRef.current;
         urlRef.current = url;
         audioRef.current = audio;
-        audio.onended = audio.onerror = () => {
-          if (audioRef.current === audio) stopPlayback();
-        };
+        const finished = new Promise<void>((resolve) => {
+          audio.onended = audio.onerror = () => {
+            if (audioRef.current === audio) stopPlayback();
+            resolve();
+          };
+          // pause also fires when a newer speak()/stop() interrupts playback
+          audio.onpause = () => resolve();
+        });
         setSpeaking(true);
         await audio.play();
+        if (opts?.waitUntilDone) await finished;
       } catch (e) {
         if (seq === seqRef.current) {
           stopPlayback();

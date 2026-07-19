@@ -5,7 +5,13 @@ import re
 from ..models import Question, UserProfile, UserSkillProfile
 from .agent_schemas import CoachReply
 from .llm import complete_json, stream_reply
-from .prompts import COACH_SYSTEM, TUTOR_SYSTEM, language_instruction
+from .prompts import (
+    COACH_SYSTEM,
+    DUO_ANSWERER_SYSTEM,
+    DUO_ASKER_SYSTEM,
+    TUTOR_SYSTEM,
+    language_instruction,
+)
 
 # A language tag only counts as such when a newline follows the opening fence
 # (otherwise "```x = 1```" would lose its first token).
@@ -32,7 +38,18 @@ def _hoist_code(reply: CoachReply) -> CoachReply:
     return reply
 
 
-def _mock_reply(mode: str, topic: str, message: str = "") -> CoachReply:
+def _mock_reply(mode: str, topic: str, message: str = "", hist_len: int = 0) -> CoachReply:
+    if mode == "duo_asker":
+        n = hist_len // 2 + 1
+        return CoachReply(
+            reply=f"(mock asker) Question {n} on {topic}: explain the core mechanism "
+                  f"at depth level {n}, and where does it break down?",
+        )
+    if mode == "duo_answerer":
+        return CoachReply(
+            reply=f"(mock answerer) Model answer on {topic}: the mechanism works like X, "
+                  f"the tradeoff interviewers listen for is Y, and a concrete example is Z.",
+        )
     snippet = ""
     if "hint" in message.lower():
         snippet = (
@@ -66,18 +83,18 @@ def _build_prompt(
         if skill else {"skill_level": 0, "mastery_score": 0, "common_mistakes": []}
     )
     locale = profile.locale if profile else "en"
+    level = profile.target_level if profile else "mid"
+    role = profile.target_role if profile else "Software Engineer"
     if mode == "lesson":
-        base = TUTOR_SYSTEM.format(
-            level=profile.target_level if profile else "mid",
-            role=profile.target_role if profile else "Software Engineer",
-            topic=topic, skill_state=json.dumps(skill_state),
-        )
+        base = TUTOR_SYSTEM.format(level=level, role=role, topic=topic,
+                                   skill_state=json.dumps(skill_state))
+    elif mode == "duo_asker":
+        base = DUO_ASKER_SYSTEM.format(level=level, role=role, topic=topic)
+    elif mode == "duo_answerer":
+        base = DUO_ANSWERER_SYSTEM.format(level=level, role=role, topic=topic)
     else:
-        base = COACH_SYSTEM.format(
-            level=profile.target_level if profile else "mid",
-            role=profile.target_role if profile else "Software Engineer",
-            mode=mode, topic=topic, skill_state=json.dumps(skill_state),
-        )
+        base = COACH_SYSTEM.format(level=level, role=role, mode=mode, topic=topic,
+                                   skill_state=json.dumps(skill_state))
     if question is not None:
         base += (
             "\nThis lesson is anchored on one classic interview question — teach the "
@@ -101,8 +118,9 @@ def chat(
 ) -> CoachReply:
     system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
                                             history, question)
+    n = len(history or [])
     return _hoist_code(complete_json(system, messages, CoachReply,
-                                     lambda: _mock_reply(mode, topic, message)))
+                                     lambda: _mock_reply(mode, topic, message, n)))
 
 
 def chat_stream(
@@ -117,8 +135,9 @@ def chat_stream(
     """Yields ("delta", text) chunks then ("final", CoachReply)."""
     system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
                                             history, question)
+    n = len(history or [])
     for kind, payload in stream_reply(system, messages, CoachReply,
-                                      lambda: _mock_reply(mode, topic, message)):
+                                      lambda: _mock_reply(mode, topic, message, n)):
         # The final payload replaces the streamed bubble, so fence cleanup
         # lands even though deltas may have shown raw markdown briefly.
         yield (kind, _hoist_code(payload) if kind == "final" else payload)
