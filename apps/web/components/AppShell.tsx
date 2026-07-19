@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, setToken } from "@/lib/api";
+import { Lang, useI18n } from "@/lib/i18n";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -17,6 +18,7 @@ const NAV = [
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { lang, setLang, t } = useI18n();
   const [localMode, setLocalMode] = useState(false);
 
   useEffect(() => {
@@ -41,12 +43,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
+            <select
+              aria-label="Language"
+              className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-600"
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
+              <option value="en">EN</option>
+              <option value="zh">中文</option>
+              <option value="es">ES</option>
+            </select>
             {localMode ? (
               <span className="ml-2 rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-500">
-                Local mode
+                {t("Local mode")}
               </span>
             ) : (
               <button
@@ -56,7 +68,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   router.push("/login");
                 }}
               >
-                Sign out
+                {t("Sign out")}
               </button>
             )}
           </nav>

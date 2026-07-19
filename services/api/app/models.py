@@ -56,6 +56,7 @@ class UserProfile(Base, TimestampMixin):
     interview_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     weekly_hours: Mapped[int] = mapped_column(Integer, default=5)
     preferred_language: Mapped[str] = mapped_column(String(40), default="python")
+    locale: Mapped[str] = mapped_column(String(10), default="en")  # en | zh | es
     strengths: Mapped[list] = mapped_column(JSON, default=list)
     weaknesses: Mapped[list] = mapped_column(JSON, default=list)
     resume_text: Mapped[str | None] = mapped_column(Text, nullable=True)

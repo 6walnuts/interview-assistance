@@ -28,6 +28,11 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _locale(db: Session, user_id: str) -> str:
+    profile = db.scalars(select(UserProfile).where(UserProfile.user_id == user_id)).first()
+    return profile.locale if profile else "en"
+
+
 def create_session(db: Session, user: User, config: dict) -> tuple[InterviewSession, Question, InterviewMessage]:
     question = planner.pick_question(
         db,
@@ -43,7 +48,8 @@ def create_session(db: Session, user: User, config: dict) -> tuple[InterviewSess
     db.add(session)
     db.flush()
 
-    turn = interviewer.next_turn(session, question, transcript=[], action="message")
+    turn = interviewer.next_turn(session, question, transcript=[], action="message",
+                                 locale=_locale(db, user.id))
     session.current_stage = turn.stage
     opening = InterviewMessage(
         session_id=session.id, role="interviewer", content=turn.message,
@@ -90,6 +96,7 @@ def handle_candidate_message(
     turn = interviewer.next_turn(
         session, session.question, _transcript(db, session.id),
         action=action, execution_summary=_latest_execution_summary(db, session.id),
+        locale=_locale(db, session.user_id),
     )
     session.current_stage = turn.stage
     reply = InterviewMessage(
@@ -146,9 +153,10 @@ def end_interview(db: Session, session: InterviewSession) -> tuple[InterviewRepo
             InterviewMessage.session_id == session.id)) if m.internal_observation
     ]
 
+    locale = _locale(db, session.user_id)
     report_data: ScoringReport = scorer.score_interview(
         session, session.question, _transcript(db, session.id),
-        code_versions, executions, observations,
+        code_versions, executions, observations, locale=locale,
     )
 
     report = InterviewReport(session_id=session.id, **report_data.model_dump())
@@ -161,7 +169,8 @@ def end_interview(db: Session, session: InterviewSession) -> tuple[InterviewRepo
 
     profile = db.scalars(select(UserProfile).where(UserProfile.user_id == session.user_id)).first()
     topic_slugs = list(db.scalars(select(LearningTopic.slug).where(LearningTopic.status == "active")))
-    plan: ReviewPlan = review_tasks.generate_review_plan(session, profile, report_data, topic_slugs)
+    plan: ReviewPlan = review_tasks.generate_review_plan(session, profile, report_data,
+                                                         topic_slugs, locale=locale)
 
     task_count = _persist_review_plan(db, session, plan)
     _update_skill_profiles(db, session, report_data, plan)

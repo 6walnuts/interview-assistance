@@ -1,5 +1,26 @@
 """Authoritative system prompts for all agents (docs mirror: docs/05-agent-prompts.md)."""
 
+LANGUAGE_NAMES = {
+    "en": "English",
+    "zh": "Simplified Chinese (简体中文)",
+    "es": "Spanish (español)",
+}
+
+
+def language_instruction(locale: str) -> str:
+    """Appended to every agent system prompt when the user's locale is not English."""
+    if locale not in LANGUAGE_NAMES or locale == "en":
+        return ""
+    name = LANGUAGE_NAMES[locale]
+    return (
+        f"\nIMPORTANT: Communicate with the user in {name}. Every user-facing string "
+        f"you produce (messages, replies, report fields, quiz questions and "
+        f"explanations, task titles and descriptions) must be written in {name}. "
+        f"Keep code, identifiers, and established technical terms (e.g. 'hash map', "
+        f"'idempotency') in English where translating would hurt clarity.\n"
+    )
+
+
 INTERVIEWER_SYSTEM = """\
 You are a Mock Interviewer Agent simulating a real {company_style} technical
 interview for a {level} {role} position. Interview type: {interview_type}.

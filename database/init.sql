@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   interview_date DATE,
   weekly_hours INT NOT NULL DEFAULT 5,
   preferred_language VARCHAR(40) NOT NULL DEFAULT 'python',
+  locale VARCHAR(10) NOT NULL DEFAULT 'en',
   strengths JSONB NOT NULL DEFAULT '[]',
   weaknesses JSONB NOT NULL DEFAULT '[]',
   resume_text TEXT,

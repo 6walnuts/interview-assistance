@@ -4,7 +4,7 @@ from datetime import date
 from ..models import LearningTopic, UserProfile
 from .agent_schemas import PlanTask, StudyPlan
 from .llm import complete_json
-from .prompts import STUDY_PLAN_SYSTEM
+from .prompts import STUDY_PLAN_SYSTEM, language_instruction
 
 DEFAULT_WEEKS = 4
 MAX_WEEKS = 12
@@ -63,7 +63,7 @@ def _mock_plan(profile: UserProfile, weeks: int, topic_slugs: list[str]) -> Stud
 def generate_study_plan(profile: UserProfile, topics: list[LearningTopic]) -> StudyPlan:
     weeks = plan_weeks(profile)
     topic_slugs = [t.slug for t in topics]
-    system = STUDY_PLAN_SYSTEM.format(
+    system = language_instruction(profile.locale) + STUDY_PLAN_SYSTEM.format(
         level=profile.current_level, role=profile.target_role,
         target_level=profile.target_level, weeks=weeks,
         weekly_hours=profile.weekly_hours,

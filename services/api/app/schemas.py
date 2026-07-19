@@ -42,6 +42,7 @@ class ProfileUpdate(BaseModel):
     interview_date: date | None = None
     weekly_hours: int | None = Field(default=None, ge=1, le=80)
     preferred_language: str | None = None
+    locale: Literal["en", "zh", "es"] | None = None
     strengths: list[str] | None = None
     weaknesses: list[str] | None = None
     resume_text: str | None = None
@@ -56,6 +57,7 @@ class ProfileOut(BaseModel):
     interview_date: date | None
     weekly_hours: int
     preferred_language: str
+    locale: str
     strengths: list[str]
     weaknesses: list[str]
     onboarding_completed: bool

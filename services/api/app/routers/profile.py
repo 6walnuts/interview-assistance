@@ -26,7 +26,8 @@ def _to_response(user: User, profile: UserProfile) -> ProfileResponse:
             target_role=profile.target_role, current_level=profile.current_level,
             target_level=profile.target_level, target_companies=profile.target_companies,
             interview_date=profile.interview_date, weekly_hours=profile.weekly_hours,
-            preferred_language=profile.preferred_language, strengths=profile.strengths,
+            preferred_language=profile.preferred_language, locale=profile.locale,
+            strengths=profile.strengths,
             weaknesses=profile.weaknesses, onboarding_completed=profile.onboarding_completed,
         ),
     )

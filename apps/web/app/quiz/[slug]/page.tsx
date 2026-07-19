@@ -6,8 +6,10 @@ import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
 import type { Quiz, QuizResult } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 export default function QuizPage() {
+  const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -52,12 +54,12 @@ export default function QuizPage() {
       <div className="mx-auto max-w-2xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">
-            {quiz ? `${quiz.topic_name} · Chapter quiz` : "Chapter quiz"}
+            {quiz ? `${quiz.topic_name} · ${t("Chapter quiz")}` : t("Chapter quiz")}
           </h1>
-          <Link href="/learn" className="text-sm text-brand-600">Back to Learn</Link>
+          <Link href="/learn" className="text-sm text-brand-600">{t("Back to Learn")}</Link>
         </div>
         {error && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
-        {!quiz && !error && <p className="mt-4 text-slate-500">Preparing questions…</p>}
+        {!quiz && !error && <p className="mt-4 text-slate-500">{t("Preparing questions…")}</p>}
 
         {result && (
           <div className="card mt-4 text-center">
@@ -65,16 +67,16 @@ export default function QuizPage() {
               {result.correct}<span className="text-xl text-slate-400"> / {result.total}</span>
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              Mastery is now <span className="font-semibold">{result.mastery_score}/100</span>
+              {t("Mastery is now")} <span className="font-semibold">{result.mastery_score}/100</span>
               {result.completed_task_ids.length > 0 && (
                 <span className="ml-2 rounded bg-green-50 px-2 py-0.5 text-xs text-green-700">
-                  {result.completed_task_ids.length} learning task completed ✓
+                  {result.completed_task_ids.length} {t("learning task completed ✓")}
                 </span>
               )}
             </p>
             <div className="mt-3 flex justify-center gap-2">
-              <button className="btn-secondary" onClick={load}>Try another set</button>
-              <Link href="/tasks" className="btn-primary">Back to tasks</Link>
+              <button className="btn-secondary" onClick={load}>{t("Try another set")}</button>
+              <Link href="/tasks" className="btn-primary">{t("Back to tasks")}</Link>
             </div>
           </div>
         )}
@@ -112,7 +114,7 @@ export default function QuizPage() {
                 </div>
                 {graded && (
                   <p className={`mt-3 rounded-lg p-3 text-sm ${graded.is_correct ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"}`}>
-                    {graded.is_correct ? "✓ Correct. " : "✗ Not quite. "}
+                    {graded.is_correct ? t("✓ Correct.") + " " : t("✗ Not quite.") + " "}
                     {graded.explanation}
                   </p>
                 )}
@@ -123,7 +125,7 @@ export default function QuizPage() {
 
         {quiz && !result && (
           <button className="btn-primary mt-4 w-full" disabled={!allAnswered || busy} onClick={submit}>
-            {busy ? "Grading…" : allAnswered ? "Submit answers" : "Answer all questions to submit"}
+            {busy ? t("Grading…") : allAnswered ? t("Submit answers") : t("Answer all questions to submit")}
           </button>
         )}
       </div>

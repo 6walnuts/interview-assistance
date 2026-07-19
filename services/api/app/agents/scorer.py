@@ -4,7 +4,7 @@ import json
 from ..models import InterviewSession, Question
 from .agent_schemas import ScoringReport
 from .llm import complete_json
-from .prompts import DIMENSIONS_BY_TYPE, SCORER_SYSTEM
+from .prompts import DIMENSIONS_BY_TYPE, SCORER_SYSTEM, language_instruction
 
 
 def _mock_report(session: InterviewSession, tests_passed: bool, hint_count: int) -> ScoringReport:
@@ -45,9 +45,10 @@ def score_interview(
     code_versions: list[dict],
     execution_results: list[dict],
     internal_observations: list[dict],
+    locale: str = "en",
 ) -> ScoringReport:
     dims = DIMENSIONS_BY_TYPE[session.interview_type]
-    system = SCORER_SYSTEM.format(
+    system = language_instruction(locale) + SCORER_SYSTEM.format(
         level=session.level, role=session.role,
         interview_type=session.interview_type, dimensions=", ".join(dims),
     )

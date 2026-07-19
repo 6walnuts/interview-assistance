@@ -24,6 +24,7 @@ export interface Profile {
   interview_date: string | null;
   weekly_hours: number;
   preferred_language: string;
+  locale: string;
   strengths: string[];
   weaknesses: string[];
   onboarding_completed: boolean;

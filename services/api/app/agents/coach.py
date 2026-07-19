@@ -4,7 +4,7 @@ import json
 from ..models import UserProfile, UserSkillProfile
 from .agent_schemas import CoachReply
 from .llm import complete_json
-from .prompts import COACH_SYSTEM
+from .prompts import COACH_SYSTEM, language_instruction
 
 
 def _mock_reply(mode: str, topic: str) -> CoachReply:
@@ -31,7 +31,8 @@ def chat(
          "common_mistakes": skill.common_mistakes}
         if skill else {"skill_level": 0, "mastery_score": 0, "common_mistakes": []}
     )
-    system = COACH_SYSTEM.format(
+    locale = profile.locale if profile else "en"
+    system = language_instruction(locale) + COACH_SYSTEM.format(
         level=profile.target_level if profile else "mid",
         role=profile.target_role if profile else "Software Engineer",
         mode=mode, topic=topic, skill_state=json.dumps(skill_state),

@@ -2,7 +2,7 @@
 from ..models import LearningTopic, UserProfile
 from .agent_schemas import GeneratedQuiz, GeneratedQuizQuestion
 from .llm import complete_json
-from .prompts import QUIZ_GEN_SYSTEM
+from .prompts import QUIZ_GEN_SYSTEM, language_instruction
 
 
 def _mock_quiz(topic: LearningTopic, count: int, offset: int = 0) -> GeneratedQuiz:
@@ -31,7 +31,8 @@ def generate_quiz(
     existing_questions: list[str],
     profile: UserProfile | None,
 ) -> GeneratedQuiz:
-    system = QUIZ_GEN_SYSTEM.format(
+    locale = profile.locale if profile else "en"
+    system = language_instruction(locale) + QUIZ_GEN_SYSTEM.format(
         count=count,
         topic=topic.name,
         category=topic.category,

@@ -2,7 +2,7 @@
 from ..models import InterviewSession, Question
 from .agent_schemas import InternalObservation, InterviewerTurn, Stage
 from .llm import complete_json
-from .prompts import INTERVIEWER_SYSTEM
+from .prompts import INTERVIEWER_SYSTEM, language_instruction
 
 STAGES: list[Stage] = [
     "introduction", "question_presentation", "clarification", "approach",
@@ -68,9 +68,10 @@ def next_turn(
     transcript: list[dict[str, str]],
     action: str = "message",
     execution_summary: str = "",
+    locale: str = "en",
 ) -> InterviewerTurn:
     """transcript: [{"role": "interviewer"|"candidate", "content": ...}] oldest first."""
-    system = INTERVIEWER_SYSTEM.format(
+    system = language_instruction(locale) + INTERVIEWER_SYSTEM.format(
         company_style=session.company_style,
         level=session.level,
         role=session.role,

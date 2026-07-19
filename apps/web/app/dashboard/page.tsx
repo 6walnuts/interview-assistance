@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import type { ProgressOverview, Task } from "@/lib/types";
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const [overview, setOverview] = useState<ProgressOverview | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -23,27 +25,27 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Link href="/interviews/new" className="btn-primary">Start a mock interview</Link>
+        <h1 className="text-2xl font-bold">{t("Dashboard")}</h1>
+        <Link href="/interviews/new" className="btn-primary">{t("Start a mock interview")}</Link>
       </div>
       {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Streak" value={overview ? `${overview.streak_days} days` : "—"} />
-        <Stat label="Interviews completed" value={overview?.interviews_completed ?? "—"} />
-        <Stat label="Recent avg score" value={overview?.avg_recent_score ?? "—"} />
-        <Stat label="Tasks pending" value={overview?.tasks_pending ?? "—"} />
+        <Stat label={t("Streak")} value={overview ? `${overview.streak_days} ${t("days")}` : "—"} />
+        <Stat label={t("Interviews completed")} value={overview?.interviews_completed ?? "—"} />
+        <Stat label={t("Recent avg score")} value={overview?.avg_recent_score ?? "—"} />
+        <Stat label={t("Tasks pending")} value={overview?.tasks_pending ?? "—"} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="card">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Today&apos;s tasks</h2>
-            <Link href="/tasks" className="text-sm text-brand-600">View all</Link>
+            <h2 className="font-semibold">{t("Today's tasks")}</h2>
+            <Link href="/tasks" className="text-sm text-brand-600">{t("View all")}</Link>
           </div>
           {tasks.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">
-              No pending tasks. Finish a mock interview to generate a study plan.
+              {t("No pending tasks. Finish a mock interview to generate a study plan.")}
             </p>
           ) : (
             <ul className="mt-3 space-y-2">
@@ -57,7 +59,7 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="card">
-          <h2 className="font-semibold">Weak areas</h2>
+          <h2 className="font-semibold">{t("Weak areas")}</h2>
           {overview && overview.weak_topics.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {overview.weak_topics.map((t) => (
@@ -65,11 +67,11 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-slate-500">No weak areas identified yet.</p>
+            <p className="mt-3 text-sm text-slate-500">{t("No weak areas identified yet.")}</p>
           )}
-          <h2 className="mt-6 font-semibold">This week</h2>
+          <h2 className="mt-6 font-semibold">{t("This week")}</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Complete your pending tasks, then take the recommended mock interview to measure progress.
+            {t("Complete your pending tasks, then take the recommended mock interview to measure progress.")}
           </p>
         </div>
       </div>

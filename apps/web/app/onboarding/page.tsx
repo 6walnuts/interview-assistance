@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { api } from "@/lib/api";
 import type { Level } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 const LEVELS: Level[] = ["junior", "mid", "senior", "staff"];
 const COMPANIES = ["Google", "Meta", "Amazon", "Microsoft", "OpenAI", "Other"];
@@ -13,6 +14,7 @@ const AREAS = [
 ];
 
 export default function OnboardingPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [targetRole, setTargetRole] = useState("Backend Engineer");
   const [currentLevel, setCurrentLevel] = useState<Level>("mid");
@@ -65,30 +67,30 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-bold">Set up your prep plan</h1>
-      <p className="mt-1 text-slate-600">This calibrates your coach, interviewer and study plan.</p>
+      <h1 className="text-2xl font-bold">{t("Set up your prep plan")}</h1>
+      <p className="mt-1 text-slate-600">{t("This calibrates your coach, interviewer and study plan.")}</p>
       <form onSubmit={onSubmit} className="card mt-6 space-y-5">
         {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
         <div>
-          <label className="label">Target role</label>
+          <label className="label">{t("Target role")}</label>
           <input className="input" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Current level</label>
+            <label className="label">{t("Current level")}</label>
             <select className="input" value={currentLevel} onChange={(e) => setCurrentLevel(e.target.value as Level)}>
               {LEVELS.map((l) => <option key={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Target level</label>
+            <label className="label">{t("Target level")}</label>
             <select className="input" value={targetLevel} onChange={(e) => setTargetLevel(e.target.value as Level)}>
               {LEVELS.map((l) => <option key={l}>{l}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="label">Target companies</label>
+          <label className="label">{t("Target companies")}</label>
           <div className="flex flex-wrap gap-2">
             {COMPANIES.map((c) => (
               <button type="button" key={c} onClick={() => toggle(companies, setCompanies, c)}
@@ -100,23 +102,23 @@ export default function OnboardingPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Interview date (optional)</label>
+            <label className="label">{t("Interview date (optional)")}</label>
             <input className="input" type="date" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
           </div>
           <div>
-            <label className="label">Hours per week</label>
+            <label className="label">{t("Hours per week")}</label>
             <input className="input" type="number" min={1} max={80} value={weeklyHours}
               onChange={(e) => setWeeklyHours(Number(e.target.value))} />
           </div>
         </div>
         <div>
-          <label className="label">Preferred language</label>
+          <label className="label">{t("Preferred language")}</label>
           <select className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
             <option value="python">Python</option>
           </select>
         </div>
         <div>
-          <label className="label">Strong areas</label>
+          <label className="label">{t("Strong areas")}</label>
           <div className="flex flex-wrap gap-2">
             {AREAS.map((a) => (
               <button type="button" key={a} onClick={() => toggle(strengths, setStrengths, a)}
@@ -127,7 +129,7 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div>
-          <label className="label">Weak areas</label>
+          <label className="label">{t("Weak areas")}</label>
           <div className="flex flex-wrap gap-2">
             {AREAS.map((a) => (
               <button type="button" key={a} onClick={() => toggle(weaknesses, setWeaknesses, a)}
@@ -138,7 +140,7 @@ export default function OnboardingPage() {
           </div>
         </div>
         <button className="btn-primary w-full" disabled={busy}>
-          {planning ? "Building your study plan…" : busy ? "Saving…" : "Finish setup & build my study plan"}
+          {planning ? t("Building your study plan…") : busy ? t("Saving…") : t("Finish setup & build my study plan")}
         </button>
       </form>
     </div>

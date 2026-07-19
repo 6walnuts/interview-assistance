@@ -7,7 +7,7 @@ import json
 from ..models import InterviewSession, UserProfile
 from .agent_schemas import GeneratedTask, NextMockInterview, ReviewPlan, ScoringReport
 from .llm import complete_json
-from .prompts import REVIEW_TASKS_SYSTEM
+from .prompts import REVIEW_TASKS_SYSTEM, language_instruction
 
 
 def _mock_plan(session: InterviewSession, report: ScoringReport) -> ReviewPlan:
@@ -43,8 +43,9 @@ def generate_review_plan(
     profile: UserProfile | None,
     report: ScoringReport,
     topic_slugs: list[str],
+    locale: str = "en",
 ) -> ReviewPlan:
-    system = REVIEW_TASKS_SYSTEM.format(
+    system = language_instruction(locale) + REVIEW_TASKS_SYSTEM.format(
         level=session.level, role=session.role,
         weekly_hours=profile.weekly_hours if profile else 5,
         topic_slugs=", ".join(topic_slugs) or "(none)",

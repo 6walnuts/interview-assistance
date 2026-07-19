@@ -10,10 +10,22 @@ from .db import Base, engine
 from .routers import auth, coach, interviews, plan, profile, progress, quiz, tasks, topics
 
 
+def _apply_lightweight_migrations() -> None:
+    """Dev convenience for existing SQLite files: add columns create_all won't."""
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    columns = {c["name"] for c in inspector.get_columns("user_profiles")}
+    if "locale" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE user_profiles ADD COLUMN locale VARCHAR(10) DEFAULT 'en'"))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Dev convenience; production uses Alembic migrations (database/).
     Base.metadata.create_all(bind=engine)
+    _apply_lightweight_migrations()
     yield
 
 

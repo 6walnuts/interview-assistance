@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 const MODULES = [
   { name: "Learn", desc: "AI Coach explains every interview topic at your level, from arrays to LLM serving." },
@@ -9,27 +12,27 @@ const MODULES = [
 ];
 
 export default function LandingPage() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <span className="text-lg font-bold text-brand-700">AI Interview Coach</span>
         <div className="flex gap-2">
-          <Link href="/login" className="btn-secondary">Sign in</Link>
-          <Link href="/register" className="btn-primary">Start free</Link>
+          <Link href="/login" className="btn-secondary">{t("Sign in")}</Link>
+          <Link href="/register" className="btn-primary">{t("Start free")}</Link>
         </div>
       </header>
 
       <section className="mx-auto max-w-4xl px-4 py-20 text-center">
         <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
-          Mock interviews that turn into a<br />
-          <span className="text-brand-600">personalized study plan</span>
+          {t("Mock interviews that turn into a")}<br />
+          <span className="text-brand-600">{t("personalized study plan")}</span>
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-          Learn → practice → mock interview → automatic scoring → review → new plan.
-          The loop that most interview tools are missing.
+          {t("Learn → practice → mock interview → automatic scoring → review → new plan. The loop that most interview tools are missing.")}
         </p>
         <Link href="/register" className="btn-primary mt-8 inline-block px-8 py-3 text-base">
-          Start your free mock interview
+          {t("Start your free mock interview")}
         </Link>
       </section>
 

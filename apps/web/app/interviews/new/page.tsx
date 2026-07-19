@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 const FOCUS_BY_TYPE: Record<string, string[]> = {
   coding: ["hash-map", "sliding-window", "binary-search", "tree", "dynamic-programming"],
@@ -11,6 +12,7 @@ const FOCUS_BY_TYPE: Record<string, string[]> = {
 };
 
 export default function InterviewSetupPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [interviewType, setInterviewType] = useState("coding");
   const [role, setRole] = useState("Backend Engineer");
@@ -41,56 +43,56 @@ export default function InterviewSetupPage() {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-bold">New mock interview</h1>
+      <h1 className="text-2xl font-bold">{t("New mock interview")}</h1>
       <form onSubmit={onSubmit} className="card mt-6 max-w-2xl space-y-5">
         {error && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
         <div>
-          <label className="label">Interview type</label>
+          <label className="label">{t("Interview type")}</label>
           <div className="grid grid-cols-2 gap-3">
             {[
               { id: "coding", name: "Coding", desc: "Algorithm problem with a live Python sandbox" },
               { id: "system_design", name: "System Design", desc: "Backend design with a text whiteboard" },
-            ].map((t) => (
-              <button type="button" key={t.id}
-                onClick={() => { setInterviewType(t.id); setFocus([]); }}
-                className={`rounded-xl border p-4 text-left ${interviewType === t.id ? "border-brand-600 bg-brand-50" : "border-slate-300"}`}>
-                <p className="font-medium">{t.name}</p>
-                <p className="mt-1 text-xs text-slate-600">{t.desc}</p>
+            ].map((ty) => (
+              <button type="button" key={ty.id}
+                onClick={() => { setInterviewType(ty.id); setFocus([]); }}
+                className={`rounded-xl border p-4 text-left ${interviewType === ty.id ? "border-brand-600 bg-brand-50" : "border-slate-300"}`}>
+                <p className="font-medium">{t(ty.name)}</p>
+                <p className="mt-1 text-xs text-slate-600">{t(ty.desc)}</p>
               </button>
             ))}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Role</label>
+            <label className="label">{t("Role")}</label>
             <input className="input" value={role} onChange={(e) => setRole(e.target.value)} />
           </div>
           <div>
-            <label className="label">Level</label>
+            <label className="label">{t("Level")}</label>
             <select className="input" value={level} onChange={(e) => setLevel(e.target.value)}>
               {["junior", "mid", "senior", "staff"].map((l) => <option key={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Company style</label>
+            <label className="label">{t("Company style")}</label>
             <select className="input" value={company} onChange={(e) => setCompany(e.target.value)}>
               {["Generic Big Tech", "Google", "Meta", "Amazon", "Microsoft", "OpenAI"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Duration (minutes)</label>
+            <label className="label">{t("Duration (minutes)")}</label>
             <select className="input" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
               {[30, 45, 60].map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Difficulty</label>
+            <label className="label">{t("Difficulty")}</label>
             <select className="input" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
               {["easy", "medium", "hard"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Language</label>
+            <label className="label">{t("Language")}</label>
             <select className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
               <option value="python">Python</option>
               <option value="javascript">JavaScript</option>
@@ -101,7 +103,7 @@ export default function InterviewSetupPage() {
           </div>
         </div>
         <div>
-          <label className="label">Focus areas (optional)</label>
+          <label className="label">{t("Focus areas (optional)")}</label>
           <div className="flex flex-wrap gap-2">
             {FOCUS_BY_TYPE[interviewType].map((f) => (
               <button type="button" key={f}
@@ -113,7 +115,7 @@ export default function InterviewSetupPage() {
           </div>
         </div>
         <button className="btn-primary w-full" disabled={busy}>
-          {busy ? "Preparing your interviewer…" : "Start interview"}
+          {busy ? t("Preparing your interviewer…") : t("Start interview")}
         </button>
       </form>
     </AppShell>

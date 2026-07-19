@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Execution, InterviewDetail, Message } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -68,6 +69,7 @@ int main() {
 };
 
 export default function InterviewRoomPage() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [detail, setDetail] = useState<InterviewDetail | null>(null);
@@ -179,7 +181,7 @@ export default function InterviewRoomPage() {
   }
 
   async function endInterview() {
-    if (!window.confirm("End the interview and generate your report?")) return;
+    if (!window.confirm(t("End the interview and generate your report?"))) return;
     setBusy(true);
     try {
       if (detail?.session.interview_type === "system_design" && design.trim()) {
@@ -195,7 +197,7 @@ export default function InterviewRoomPage() {
 
   if (!detail) {
     return <div className="flex min-h-screen items-center justify-center text-slate-500">
-      {error ?? "Loading interview…"}
+      {error ?? t("Loading interview…")}
     </div>;
   }
 
@@ -215,7 +217,7 @@ export default function InterviewRoomPage() {
             ⏱ {minutes}:{seconds}
           </span>
           <button className="btn-secondary !py-1 text-red-600" onClick={endInterview} disabled={busy}>
-            End Interview
+            {t("End Interview")}
           </button>
         </div>
       </header>
@@ -235,19 +237,19 @@ export default function InterviewRoomPage() {
               <div key={m.id} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === "interviewer" ? "bg-slate-100" : "ml-auto bg-brand-50"}`}>
                 <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">
-                  {m.role === "interviewer" ? "Interviewer" : "You"}
+                  {m.role === "interviewer" ? t("Interviewer") : t("You")}
                 </p>
                 {m.content}
               </div>
             ))}
-            {busy && <p className="text-xs text-slate-400">Interviewer is typing…</p>}
+            {busy && <p className="text-xs text-slate-400">{t("Interviewer is typing…")}</p>}
             <div ref={bottomRef} />
           </div>
           {error && <p className="mx-3 mb-1 rounded bg-red-50 px-2 py-1 text-xs text-red-700">{error}</p>}
           <div className="border-t border-slate-200 p-3">
             <textarea
               className="input h-20 resize-none"
-              placeholder="Talk to your interviewer… (Enter to send, Shift+Enter for newline)"
+              placeholder={t("Talk to your interviewer… (Enter to send, Shift+Enter for newline)")}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -258,9 +260,9 @@ export default function InterviewRoomPage() {
               }}
             />
             <div className="mt-2 flex gap-2">
-              <button className="btn-primary" disabled={busy || !input.trim()} onClick={() => send(input, "message")}>Send</button>
-              <button className="btn-secondary" disabled={busy || !input.trim()} onClick={() => send(input, "ask_clarification")}>Ask Clarification</button>
-              <button className="btn-secondary" disabled={busy} onClick={() => send("Could I get a hint?", "request_hint")}>Request Hint</button>
+              <button className="btn-primary" disabled={busy || !input.trim()} onClick={() => send(input, "message")}>{t("Send")}</button>
+              <button className="btn-secondary" disabled={busy || !input.trim()} onClick={() => send(input, "ask_clarification")}>{t("Ask Clarification")}</button>
+              <button className="btn-secondary" disabled={busy} onClick={() => send(t("Could I get a hint?"), "request_hint")}>{t("Request Hint")}</button>
             </div>
           </div>
         </div>
@@ -290,9 +292,9 @@ export default function InterviewRoomPage() {
               <div className="border-t border-slate-200 bg-white p-3">
                 <div className="flex gap-2">
                   <button className="btn-secondary" disabled={running} onClick={() => runCode("run")}>
-                    {running ? "Running…" : "Run Code"}
+                    {running ? t("Running…") : t("Run Code")}
                   </button>
-                  <button className="btn-primary" disabled={running} onClick={() => runCode("submit")}>Submit</button>
+                  <button className="btn-primary" disabled={running} onClick={() => runCode("submit")}>{t("Submit")}</button>
                 </div>
                 {execution && (
                   <div className="mt-2 max-h-36 overflow-y-auto rounded-lg bg-slate-900 p-3 font-mono text-xs text-slate-100">
@@ -313,7 +315,7 @@ export default function InterviewRoomPage() {
             </>
           ) : (
             <div className="flex flex-1 flex-col bg-white p-3">
-              <label className="label">Design whiteboard (plain text / markdown)</label>
+              <label className="label">{t("Design whiteboard (plain text / markdown)")}</label>
               <textarea
                 className="input flex-1 resize-none font-mono text-sm"
                 placeholder={"Components:\n- API Gateway\n- ...\n\nData model:\n...\n\nFailure handling:\n..."}
@@ -322,7 +324,7 @@ export default function InterviewRoomPage() {
               />
               <button className="btn-secondary mt-2 self-start" disabled={busy || !design.trim()}
                 onClick={() => send(`Here is my current design:\n${design}`, "message")}>
-                Share design with interviewer
+                {t("Share design with interviewer")}
               </button>
             </div>
           )}

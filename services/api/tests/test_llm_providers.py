@@ -40,3 +40,20 @@ def test_legacy_openai_key_does_not_leak_to_other_providers():
     s = Settings(llm_provider="deepseek", openai_api_key="sk-legacy", mock_ai=False)
     assert s.resolved_api_key == ""
     assert not s.ai_enabled
+
+
+def test_language_instruction():
+    from app.agents.prompts import language_instruction
+
+    assert language_instruction("en") == ""
+    assert "简体中文" in language_instruction("zh")
+    assert "español" in language_instruction("es")
+    assert language_instruction("fr") == ""  # unknown locales fall back to English
+
+
+def test_profile_locale_roundtrip(client, auth_headers):
+    resp = client.put("/api/profile", headers=auth_headers, json={"locale": "zh"})
+    assert resp.status_code == 200
+    assert resp.json()["profile"]["locale"] == "zh"
+    assert client.put("/api/profile", headers=auth_headers,
+                      json={"locale": "jp"}).status_code == 422
