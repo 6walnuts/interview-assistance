@@ -14,6 +14,7 @@ type Speaker = "asker" | "answerer" | "user";
 type Turn = { speaker: Speaker; text: string };
 
 const MAX_TURNS = 24;
+const END_MARKER = "[END_OF_DIALOGUE]";
 // Distinct TTS voices so the dialogue sounds like two people.
 const VOICES: Record<Speaker, string> = { asker: "echo", answerer: "coral", user: "alloy" };
 const HISTORY_SENT = 16;
@@ -26,6 +27,8 @@ export default function DuoPage() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [hasResume, setHasResume] = useState<boolean | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [finished, setFinished] = useState(false);
+  const finishedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
@@ -73,7 +76,7 @@ export default function DuoPage() {
   }, []);
 
   const generateTurn = useCallback(async (): Promise<boolean> => {
-    if (busyRef.current) return false;
+    if (busyRef.current || finishedRef.current) return false;
     const all = turnsRef.current;
     if (all.length >= MAX_TURNS) return false;
     const last = all[all.length - 1];
@@ -103,11 +106,24 @@ export default function DuoPage() {
           setTurns([...all, { speaker: persona, text: partial }]);
         }
       );
-      setTurns([...all, { speaker: persona, text: resp.reply }]);
-      if (voiceOnRef.current) {
-        await speakRef.current(resp.reply, { voice: VOICES[persona], waitUntilDone: true });
+      // Termination: explicit end marker from the asker, or (safety net) the
+      // two sides starting to echo each other's farewell lines verbatim.
+      const ended = resp.reply.includes(END_MARKER);
+      const text = resp.reply.replace(END_MARKER, "").trim();
+      // Only the other side echoing the previous line verbatim counts as a
+      // farewell loop (same-speaker repetition is legitimate in short mocks).
+      const looping = all.length >= 1 && text === all[all.length - 1].text;
+      setTurns([...all, { speaker: persona, text }]);
+      if (ended || looping) {
+        finishedRef.current = true;
+        setFinished(true);
+        playingRef.current = false;
+        setPlaying(false);
       }
-      return true;
+      if (voiceOnRef.current && text) {
+        await speakRef.current(text, { voice: VOICES[persona], waitUntilDone: true });
+      }
+      return !(ended || looping);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Dialogue failed");
       setTurns(all); // drop the empty bubble
@@ -143,6 +159,8 @@ export default function DuoPage() {
     playingRef.current = false;
     setPlaying(false);
     speaker.stop();
+    finishedRef.current = false;
+    setFinished(false);
     setTurns([]);
   }
 
@@ -195,8 +213,13 @@ export default function DuoPage() {
           <button className="btn-secondary !py-1 text-xs" onClick={restart} disabled={busy && !playing}>
             🔄 {t("Restart")}
           </button>
+          {finished && (
+            <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+              ✅ {t("Dialogue finished")}
+            </span>
+          )}
           <button className="btn-primary !py-1 text-xs" onClick={togglePlay}
-            disabled={turns.length >= MAX_TURNS}>
+            disabled={finished || turns.length >= MAX_TURNS}>
             {playing ? `⏸ ${t("Pause")}` : `▶ ${t("Play")}`}
           </button>
         </div>
@@ -241,7 +264,8 @@ export default function DuoPage() {
           <button className="btn-primary" disabled={busy || !input.trim()} onClick={() => void askMine()}>
             {t("Send")}
           </button>
-          <button className="btn-secondary shrink-0" disabled={busy || playing || turns.length >= MAX_TURNS}
+          <button className="btn-secondary shrink-0"
+            disabled={busy || playing || finished || turns.length >= MAX_TURNS}
             onClick={() => void generateTurn()}>
             ⏭ {t("Next turn")}
           </button>

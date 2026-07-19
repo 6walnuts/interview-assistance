@@ -43,6 +43,12 @@ def _hoist_code(reply: CoachReply) -> CoachReply:
 def _mock_reply(mode: str, topic: str, message: str = "", hist_len: int = 0) -> CoachReply:
     if mode in ("duo_asker", "bq_asker"):
         n = hist_len // 2 + 1
+        if n > 5:  # deterministic wrap-up so the end-of-dialogue flow is testable
+            return CoachReply(
+                reply="(mock closing) Credible: the rollback story. Would not survive a "
+                      "reference check: the unquantified 'improved reliability' claim. "
+                      "[END_OF_DIALOGUE]",
+            )
         if mode == "bq_asker":
             return CoachReply(
                 reply=f"(mock BQ interviewer) Question {n}: tell me about a time on the "

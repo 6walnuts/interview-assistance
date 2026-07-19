@@ -110,6 +110,7 @@ const DICT: Record<string, [string, string]> = {
   "Pause": ["暂停", "Pausa"],
   "Restart": ["重新开始", "Reiniciar"],
   "Next turn": ["下一轮", "Siguiente turno"],
+  "Dialogue finished": ["对话已结束", "Diálogo terminado"],
   "Read the dialogue aloud with two voices": ["用两种音色朗读对话", "Leer el diálogo con dos voces"],
   "Two AIs quiz each other from basics to depth — press Play, then sit back and learn. You can jump in with your own question anytime.":
     ["两个 AI 围绕这个知识点由浅入深互相问答——点“播放”后坐着学就行，随时可以插入你自己的问题。",
