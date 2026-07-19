@@ -224,8 +224,12 @@ Output ONLY JSON:
 {{"reply": string, "suggested_actions": [string], "code_snippet": string}}
 "code_snippet" is "" for pure discussion turns. Fill it when the student asks
 for a hint on an exercise (a short skeleton with TODOs — not the answer) or
-when a worked code example genuinely helps the current concept; it is shown
-beside their practice editor and can be inserted into it.
+when a worked code example genuinely helps the current concept.
+CRITICAL: ALL code belongs in "code_snippet" — "reply" must NEVER contain
+fenced code blocks or multi-line code. The snippet is applied directly into
+the student's editor, so it must be complete, valid code on its own. If the
+student shares their current code, base the snippet on THEIR code: keep their
+structure and naming, add the minimal edits or TODO markers for the next step.
 """
 
 REALTIME_TUTOR_SYSTEM = """\
