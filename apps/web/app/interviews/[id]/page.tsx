@@ -79,6 +79,8 @@ export default function InterviewRoomPage() {
   const [stage, setStage] = useState("introduction");
   const [input, setInput] = useState("");
   const [code, setCode] = useState("# Write your solution here\n");
+  // Editor language: starts from the session config, switchable mid-interview.
+  const [editorLang, setEditorLang] = useState<string | null>(null);
   const [design, setDesign] = useState("");
   const [execution, setExecution] = useState<Execution | null>(null);
   const [busy, setBusy] = useState(false);
@@ -217,8 +219,18 @@ export default function InterviewRoomPage() {
     [busy, id, stage, speaker.enabled, speaker.speak]
   );
 
+  const activeLang = editorLang ?? detail?.session.language ?? "python";
+
+  function switchEditorLang(next: string) {
+    const currentSetup = LANGUAGE_SETUP[activeLang] ?? LANGUAGE_SETUP.python;
+    const untouched = code === currentSetup.starter || !code.trim();
+    setEditorLang(next);
+    if (untouched) setCode((LANGUAGE_SETUP[next] ?? LANGUAGE_SETUP.python).starter);
+    setExecution(null);
+  }
+
   async function runCode(label: "run" | "submit") {
-    const lang = detail?.session.language ?? "python";
+    const lang = activeLang;
     setRunning(true);
     setError(null);
     try {
@@ -375,18 +387,30 @@ export default function InterviewRoomPage() {
             <>
               <div className="flex-1">
                 <MonacoEditor
-                  language={(LANGUAGE_SETUP[detail.session.language] ?? LANGUAGE_SETUP.python).monaco}
+                  language={(LANGUAGE_SETUP[activeLang] ?? LANGUAGE_SETUP.python).monaco}
                   value={code}
                   onChange={(v) => setCode(v ?? "")}
                   options={{ minimap: { enabled: false }, fontSize: 14, scrollBeyondLastLine: false }}
                 />
               </div>
               <div className="border-t border-slate-200 bg-white p-3">
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button className="btn-secondary" disabled={running} onClick={() => runCode("run")}>
                     {running ? t("Running…") : t("Run Code")}
                   </button>
                   <button className="btn-primary" disabled={running} onClick={() => runCode("submit")}>{t("Submit")}</button>
+                  <select
+                    className="input ml-auto !w-36 !py-1 text-sm"
+                    value={activeLang}
+                    onChange={(e) => switchEditorLang(e.target.value)}
+                    title={t("Switch the editor language")}
+                  >
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="go">Go</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                  </select>
                 </div>
                 {execution && (
                   <div className="mt-2 max-h-36 overflow-y-auto rounded-lg bg-slate-900 p-3 font-mono text-xs text-slate-100">
