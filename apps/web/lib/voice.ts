@@ -122,6 +122,9 @@ export function useSpeaker(onError?: (msg: string) => void) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
   const rateRef = useRef(1);
+  // Monotonic sequence: each speak() invalidates all earlier ones, so a slow
+  // TTS fetch that resolves late can never play on top of newer audio.
+  const seqRef = useRef(0);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
 
@@ -142,7 +145,7 @@ export function useSpeaker(onError?: (msg: string) => void) {
     if (audioRef.current) audioRef.current.playbackRate = r;
   }, []);
 
-  const stop = useCallback(() => {
+  const stopPlayback = useCallback(() => {
     audioRef.current?.pause();
     audioRef.current = null;
     if (urlRef.current) {
@@ -151,6 +154,11 @@ export function useSpeaker(onError?: (msg: string) => void) {
     }
     setSpeaking(false);
   }, []);
+
+  const stop = useCallback(() => {
+    seqRef.current += 1; // also cancels any speak() still fetching
+    stopPlayback();
+  }, [stopPlayback]);
 
   const setEnabled = useCallback(
     (v: boolean) => {
@@ -163,7 +171,8 @@ export function useSpeaker(onError?: (msg: string) => void) {
 
   const speak = useCallback(
     async (text: string) => {
-      stop();
+      stopPlayback();
+      const seq = ++seqRef.current; // newer speech always wins
       const speakable = stripCodeForSpeech(text);
       if (!speakable) return;
       try {
@@ -172,22 +181,26 @@ export function useSpeaker(onError?: (msg: string) => void) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: speakable }),
         });
-        const url = URL.createObjectURL(await resp.blob());
+        const blob = await resp.blob();
+        if (seq !== seqRef.current) return; // superseded while fetching
+        const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audio.playbackRate = rateRef.current;
         urlRef.current = url;
         audioRef.current = audio;
         audio.onended = audio.onerror = () => {
-          if (audioRef.current === audio) stop();
+          if (audioRef.current === audio) stopPlayback();
         };
         setSpeaking(true);
         await audio.play();
       } catch (e) {
-        stop();
-        onErrorRef.current?.(e instanceof Error ? e.message : "Speech playback failed");
+        if (seq === seqRef.current) {
+          stopPlayback();
+          onErrorRef.current?.(e instanceof Error ? e.message : "Speech playback failed");
+        }
       }
     },
-    [stop]
+    [stopPlayback]
   );
 
   useEffect(() => stop, [stop]);

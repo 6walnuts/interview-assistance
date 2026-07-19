@@ -359,6 +359,9 @@ class CoachChatRequest(BaseModel):
     # Prior turns of this conversation (oldest first) so multi-turn chats and
     # lessons keep their context; capped to protect the prompt budget.
     history: list[ChatTurn] = Field(default_factory=list, max_length=30)
+    # Anchor a lesson on one question-bank entry: the tutor teaches toward
+    # that question's prompt and rubric.
+    question_id: str | None = None
 
 
 class CoachChatResponse(BaseModel):

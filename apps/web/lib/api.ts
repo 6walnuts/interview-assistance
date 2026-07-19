@@ -155,13 +155,17 @@ export const api = {
     message: string,
     mode: string,
     topicSlug?: string,
-    history: { role: "user" | "assistant"; content: string }[] = []
+    history: { role: "user" | "assistant"; content: string }[] = [],
+    questionId?: string | null
   ) =>
     request<{ reply: string; suggested_actions: string[]; code_snippet: string }>(
       "/api/coach/chat",
       {
         method: "POST",
-        body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
+        body: JSON.stringify({
+          message, mode, topic_slug: topicSlug ?? null, history,
+          question_id: questionId ?? null,
+        }),
       }
     ),
 
@@ -176,7 +180,8 @@ export const api = {
     mode: string,
     topicSlug: string | undefined,
     history: { role: "user" | "assistant"; content: string }[],
-    onDelta: (text: string) => void
+    onDelta: (text: string) => void,
+    questionId?: string | null
   ): Promise<{ reply: string; suggested_actions: string[]; code_snippet: string }> => {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const token = getToken();
@@ -184,7 +189,10 @@ export const api = {
     const resp = await fetch(`${API_URL}/api/coach/chat/stream`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
+      body: JSON.stringify({
+        message, mode, topic_slug: topicSlug ?? null, history,
+        question_id: questionId ?? null,
+      }),
     });
     if (!resp.ok || !resp.body) {
       let detail = resp.statusText;

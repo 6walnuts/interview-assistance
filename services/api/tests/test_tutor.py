@@ -16,6 +16,22 @@ def test_coach_lesson_mode_with_history(client, auth_headers):
     assert isinstance(body["suggested_actions"], list)
 
 
+def test_lesson_anchored_on_question(client, auth_headers):
+    q = client.get("/api/questions?category=caching", headers=auth_headers).json()[0]
+    resp = client.post("/api/coach/chat", json={
+        "message": f"Start the lesson focused on \"{q['title']}\".",
+        "mode": "lesson", "topic_slug": "caching", "question_id": q["id"],
+    }, headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["reply"]
+
+    # Unknown question ids are ignored rather than erroring.
+    ok = client.post("/api/coach/chat", json={
+        "message": "hi", "mode": "lesson", "question_id": "nonexistent-id",
+    }, headers=auth_headers)
+    assert ok.status_code == 200
+
+
 def test_coach_history_capped(client, auth_headers):
     too_long = [{"role": "user", "content": f"turn {i}"} for i in range(31)]
     resp = client.post("/api/coach/chat", json={
