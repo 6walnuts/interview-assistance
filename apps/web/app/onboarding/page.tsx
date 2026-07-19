@@ -11,6 +11,7 @@ const COMPANIES = ["Google", "Meta", "Amazon", "Microsoft", "OpenAI", "Other"];
 const AREAS = [
   "arrays", "dynamic-programming", "system-design", "api-design", "caching",
   "kafka", "kubernetes", "concurrency", "llm-serving",
+  "ml-fundamentals", "transformers", "recommendation-systems",
 ];
 
 export default function OnboardingPage() {

@@ -15,6 +15,7 @@ const CATEGORIES = [
   { id: "cs_fundamentals", name: "CS Fundamentals" },
   { id: "infrastructure", name: "Infrastructure" },
   { id: "ai_infrastructure", name: "AI Infrastructure" },
+  { id: "machine_learning", name: "Machine Learning" },
 ];
 
 type ChatMsg = { role: "user" | "coach"; text: string };

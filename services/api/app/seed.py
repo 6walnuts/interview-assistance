@@ -41,6 +41,17 @@ TOPICS: list[dict] = [
     # ai infrastructure
     {"slug": "llm-serving", "name": "LLM Serving & KV Cache", "category": "ai_infrastructure", "difficulty": 4},
     {"slug": "rag-systems", "name": "RAG Systems", "category": "ai_infrastructure", "difficulty": 3},
+    # machine learning (domain knowledge: theory & algorithms, vs. ai_infrastructure's engineering)
+    {"slug": "ml-fundamentals", "name": "Bias-Variance & Overfitting", "category": "machine_learning", "difficulty": 2},
+    {"slug": "supervised-learning", "name": "Supervised Learning Models", "category": "machine_learning", "difficulty": 2},
+    {"slug": "feature-engineering", "name": "Feature Engineering", "category": "machine_learning", "difficulty": 2},
+    {"slug": "model-evaluation", "name": "Model Evaluation & Metrics", "category": "machine_learning", "difficulty": 2},
+    {"slug": "neural-networks", "name": "Neural Networks & Backprop", "category": "machine_learning", "difficulty": 3},
+    {"slug": "training-optimization", "name": "Training & Optimization", "category": "machine_learning", "difficulty": 3},
+    {"slug": "embeddings", "name": "Embeddings & Representations", "category": "machine_learning", "difficulty": 3},
+    {"slug": "transformers", "name": "Transformers & Attention", "category": "machine_learning", "difficulty": 4},
+    {"slug": "llm-fine-tuning", "name": "LLM Fine-tuning (SFT / LoRA / RLHF)", "category": "machine_learning", "difficulty": 4},
+    {"slug": "recommendation-systems", "name": "Recommendation Systems", "category": "machine_learning", "difficulty": 3},
 ]
 
 QUESTIONS: list[dict] = [
@@ -129,6 +140,22 @@ QUIZ: list[dict] = [
                  "Optimistic locking on the account row", "At-most-once delivery"],
      "answer_index": 1,
      "explanation": "An idempotency key lets the server detect duplicates and return the stored result."},
+    {"topic_slug": "ml-fundamentals",
+     "question": "Your model has 99% training accuracy but 70% validation accuracy. What is the most "
+                 "likely problem and a reasonable first fix?",
+     "options": ["Underfitting — add more layers", "Overfitting — add regularization or more data",
+                 "Data leakage — remove the validation set", "Vanishing gradients — switch to ReLU"],
+     "answer_index": 1,
+     "explanation": "A large train/validation gap signals high variance (overfitting); regularization, "
+                    "dropout, early stopping or more data narrow the gap."},
+    {"topic_slug": "transformers",
+     "question": "In self-attention, why is the dot product of queries and keys divided by sqrt(d_k)?",
+     "options": ["To keep the sequence length constant", "To normalize the value vectors",
+                 "To stop softmax saturating when dot products grow with dimension",
+                 "To make attention weights sum to 1"],
+     "answer_index": 2,
+     "explanation": "Dot products scale with dimension d_k; dividing by sqrt(d_k) keeps their variance "
+                    "stable so softmax gradients don't vanish."},
 ]
 
 

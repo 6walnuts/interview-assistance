@@ -91,6 +91,7 @@ const DICT: Record<string, [string, string]> = {
   "CS Fundamentals": ["计算机基础", "Fundamentos de CS"],
   "Infrastructure": ["基础设施", "Infraestructura"],
   "AI Infrastructure": ["AI 基础设施", "Infraestructura de IA"],
+  "Machine Learning": ["机器学习", "Machine Learning"],
   "explain": ["讲解", "explicar"],
   "quiz": ["测验", "quiz"],
   "flashcards": ["记忆卡", "tarjetas"],
