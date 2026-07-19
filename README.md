@@ -36,9 +36,21 @@ docs/           设计文档
 
 ```bash
 cp .env.example services/api/.env
-# 不填 OPENAI_API_KEY 也能跑：MOCK_AI=true 时所有 Agent 走确定性 mock，
+# 不填任何 API key 也能跑：MOCK_AI=true 时所有 Agent 走确定性 mock，
 # 整个「面试 → 评分 → 学习任务」闭环离线可用。
 ```
+
+**支持多家 AI 供应商**，通过 `LLM_PROVIDER` 切换：
+
+| Provider | 配置 | 默认模型 |
+|---|---|---|
+| OpenAI | `LLM_PROVIDER=openai LLM_API_KEY=sk-...` | gpt-4o-mini |
+| DeepSeek | `LLM_PROVIDER=deepseek LLM_API_KEY=sk-...` | deepseek-chat |
+| Kimi (Moonshot) | `LLM_PROVIDER=kimi LLM_API_KEY=sk-...` | kimi-latest（海外账号加 `LLM_BASE_URL=https://api.moonshot.ai/v1`） |
+| Claude (Anthropic) | `LLM_PROVIDER=anthropic LLM_API_KEY=sk-ant-...` | claude-opus-4-8（省钱可设 `LLM_MODEL=claude-haiku-4-5`） |
+
+DeepSeek/Kimi 走 OpenAI 兼容接口；Claude 走官方 `anthropic` SDK。
+任何 OpenAI 兼容的自建网关也可以用 `LLM_BASE_URL` 接入。设置后记得 `MOCK_AI=false`。
 
 ### 1. 后端（默认 SQLite，零依赖启动）
 
