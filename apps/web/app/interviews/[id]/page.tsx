@@ -6,7 +6,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Execution, InterviewDetail, Message } from "@/lib/types";
 
-const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
+const MonacoEditor = dynamic(
+  async () => {
+    const { loader, default: Editor } = await import("@monaco-editor/react");
+    // Self-hosted Monaco assets (copied to public/ by scripts/copy-monaco.mjs)
+    // instead of the default CDN, so the editor works offline / behind proxies.
+    loader.config({ paths: { vs: "/monaco/vs" } });
+    return Editor;
+  },
+  { ssr: false }
+);
 
 const STAGES = [
   "introduction", "question_presentation", "clarification", "approach", "deep_dive",
