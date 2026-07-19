@@ -6,7 +6,7 @@ from app.seed_questions import CLASSIC_QUESTIONS
 def test_bank_size_and_unique_titles():
     all_q = [*QUESTIONS, *CLASSIC_QUESTIONS]
     titles = [q["title"] for q in all_q]
-    assert len(CLASSIC_QUESTIONS) == 44
+    assert len(CLASSIC_QUESTIONS) == 60
     assert len(titles) == len(set(titles)), "duplicate question titles"
 
 
@@ -15,7 +15,7 @@ def test_classic_questions_are_well_formed():
 
     valid_slugs = {t["slug"] for t in TOPICS}
     for q in CLASSIC_QUESTIONS:
-        assert q["interview_type"] == "system_design", q["title"]
+        assert q["interview_type"] in {"system_design", "coding"}, q["title"]
         assert q["difficulty"] in {"easy", "medium", "hard"}, q["title"]
         assert q["category"] in valid_slugs, f"{q['title']}: unknown category {q['category']}"
         assert len(q["prompt"]) > 100, q["title"]

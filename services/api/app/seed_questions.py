@@ -10,9 +10,9 @@ a strong candidate.
 """
 
 def _q(category: str, difficulty: str, title: str, prompt: str,
-       constraints: list, expected: list) -> dict:
+       constraints: list, expected: list, interview_type: str = "system_design") -> dict:
     return {
-        "interview_type": "system_design", "category": category,
+        "interview_type": interview_type, "category": category,
         "difficulty": difficulty, "title": title, "prompt": prompt,
         "examples": [], "constraints": constraints, "test_cases": [],
         "rubric": {"expected": expected},
@@ -427,4 +427,167 @@ CLASSIC_QUESTIONS: list[dict] = [
        ["spatio-temporal architecture over image backbone", "temporal attention/consistency techniques",
         "video-text training data curation at scale", "async job design: queue, progress, notifications",
         "compute estimation and cascaded generation", "evaluation: frame quality + motion + human eval"]),
+
+    # ---------------- Object-oriented design classics ----------------
+    _q("ood", "easy", "Design a Parking Lot (OOD)",
+       "Design the classes for a multi-level parking lot: several spot sizes, different "
+       "vehicle types, entry/exit gates that issue and settle tickets, and hourly pricing. "
+       "Sketch the class diagram on the whiteboard, walk through the object interactions "
+       "for park/unpark, and explain which parts are open for extension.",
+       ["3 spot sizes, motorcycles/cars/buses", "pricing strategy will change", "multiple gates operate concurrently"],
+       ["core entities and their responsibilities", "spot assignment strategy behind an interface",
+        "pricing as a strategy pattern", "ticket lifecycle state", "extensibility (EV spots, reservations)",
+        "which invariants need locking at gates"]),
+
+    _q("ood", "medium", "Design an Elevator System (OOD)",
+       "Design the classes and control logic for a bank of elevators in an office tower. "
+       "Cover the scheduling algorithm interface, elevator state machine (moving, doors, "
+       "idle), hall-call vs car-call handling, and how you would unit-test the dispatcher.",
+       ["6 cars, 40 floors", "scheduling policy must be swappable", "safety states cannot be bypassed"],
+       ["elevator state machine modeling", "dispatcher/scheduler behind an interface",
+        "request types and queueing per car", "look/scan style algorithm discussion",
+        "testability: simulated clock, deterministic tests", "safety invariants and edge cases"]),
+
+    _q("ood", "easy", "Design a Vending Machine (OOD)",
+       "Design a vending machine's classes: inventory slots, coin/bill/card payment, "
+       "product selection, dispensing and change-making. Model the transaction as an "
+       "explicit state machine and discuss error paths (payment declined, product jam).",
+       ["multiple payment methods", "exact-change constraints", "must recover from mid-transaction failure"],
+       ["state pattern for the purchase flow", "payment handling behind a common interface",
+        "inventory model and restocking", "change-making logic and failure refunds",
+        "error/timeout transitions", "clean separation of hardware adapter layer"]),
+
+    _q("ood", "medium", "Design a Movie Ticket Booking System (OOD)",
+       "Design the object model for a cinema booking service: theaters, screens, seat "
+       "maps, showtimes, seat holds and bookings, payments. Focus on how you prevent two "
+       "users from booking the same seat and how holds expire.",
+       ["seat-level selection", "holds expire in 10 minutes", "same-seat race conditions"],
+       ["entity model: show, seat, hold, booking", "hold-with-TTL then confirm design",
+        "optimistic vs pessimistic seat locking", "state transitions and cancellation/refund",
+        "pricing tiers modeling", "read model for the seat-map UI"]),
+
+    _q("ood", "medium", "Design a Chess Game (OOD)",
+       "Design the classes for a two-player chess game: board, pieces, move generation "
+       "and validation, turn management, and game-end detection. Explain where "
+       "polymorphism carries the design and how you'd support undo and move history.",
+       ["all standard rules incl. castling/en passant", "undo support", "replayable move history"],
+       ["piece hierarchy with polymorphic move rules", "board representation choice",
+        "move validation pipeline incl. check detection", "command pattern for undo/history",
+        "special-rule handling without instanceof soup", "separating rules engine from UI"]),
+
+    _q("ood", "medium", "Design an ATM (OOD)",
+       "Design the software object model for an ATM: card session, PIN auth, account "
+       "operations (balance, withdraw, deposit), cash dispensing with denomination "
+       "management, and receipt/audit logging. Bank communication can fail mid-operation.",
+       ["network to bank is unreliable", "cash inventory by denomination", "every operation audited"],
+       ["session state machine from card-in to card-out", "transaction atomicity vs dispense failures",
+        "denomination/dispense algorithm", "hardware abstraction interfaces",
+        "audit log and reconciliation hooks", "timeout and card-capture edge cases"]),
+
+    _q("ood", "medium", "Design a Restaurant Reservation System (OOD)",
+       "Design the classes for restaurant table reservations: tables with capacities, "
+       "time slots, walk-ins vs reservations, waitlist, and no-show handling. Cover how "
+       "table assignment strategy stays swappable and how the waitlist promotes parties.",
+       ["mixed walk-in and reserved seating", "parties of varying size", "no-show releases tables"],
+       ["entity model: table, slot, reservation, waitlist entry", "assignment strategy interface",
+        "waitlist promotion rules", "no-show timers and state transitions",
+        "conflict handling for overlapping slots", "notification hooks"]),
+
+    _q("ood", "medium", "Design a Package Locker System (OOD)",
+       "Design the object model for delivery lockers: couriers deposit packages into "
+       "size-matched compartments, recipients collect with one-time codes, and expired "
+       "packages are returned. Cover compartment allocation and code lifecycle.",
+       ["3 compartment sizes", "pickup codes expire in 3 days", "lockers are offline-tolerant"],
+       ["compartment allocation by size with fallback", "one-time code generation/validation",
+        "package lifecycle state machine", "expiry sweep and return flow",
+        "courier vs recipient role interfaces", "offline operation and sync design"]),
+
+    # ---------------- Concurrency design classics (implement & run) ----------------
+    _q("concurrency", "medium", "Implement a Bounded Blocking Queue",
+       "Implement a thread-safe bounded blocking queue: put(item) blocks while full, "
+       "take() blocks while empty. Then demonstrate it with N producer and M consumer "
+       "threads in main, printing enough to show blocking works. Explain your choice of "
+       "locks/condition variables and why there is no lost-wakeup.",
+       ["fixed capacity", "no busy-waiting", "must not deadlock on shutdown"],
+       ["mutex + two condition variables (or equivalent)", "while-loop wait predicate, not if",
+        "notify vs notify-all reasoning", "demo shows blocking on full and empty",
+        "shutdown/poison-pill handling", "discussion: lock-free alternatives"],
+       interview_type="coding"),
+
+    _q("concurrency", "medium", "Implement a Thread-safe LRU Cache",
+       "Implement an LRU cache with get/put and a capacity limit that is safe under "
+       "concurrent access, then drive it from multiple threads in main. Discuss the "
+       "single-lock design first, then how you would reduce contention.",
+       ["O(1) get/put", "correct eviction order under concurrency", "readers should not corrupt recency"],
+       ["hashmap + doubly-linked list core", "coarse lock correctness first",
+        "why get mutates state and what that means for locking",
+        "contention reduction: sharding/striping discussion", "demo with concurrent readers/writers",
+        "eviction correctness verification"],
+       interview_type="coding"),
+
+    _q("concurrency", "medium", "Implement a Thread-safe Token Bucket Rate Limiter",
+       "Implement a token-bucket rate limiter: allow(n) returns whether a request may "
+       "proceed, tokens refill continuously up to a burst cap. Make it safe for many "
+       "threads, demonstrate with a burst of concurrent requests, and explain refill "
+       "computation without a background thread.",
+       ["configurable rate and burst", "no dedicated refill thread", "monotonic clock use"],
+       ["lazy refill on access from elapsed time", "atomicity of check-and-consume",
+        "monotonic vs wall clock", "fairness limitations of the design",
+        "demo output proving rate is enforced", "distributed variant discussion"],
+       interview_type="coding"),
+
+    _q("concurrency", "medium", "Implement a Producer-Consumer Pipeline with Graceful Shutdown",
+       "Build a 3-stage pipeline (parse -> transform -> write) where stages run as "
+       "thread pools connected by queues. Implement clean shutdown: after producers "
+       "finish, every in-flight item is processed exactly once and all threads exit. "
+       "Demonstrate with a run in main.",
+       ["multiple workers per stage", "no item lost or processed twice on shutdown", "bounded queues"],
+       ["bounded queues for backpressure", "poison-pill or sentinel-per-worker shutdown",
+        "exactly-once reasoning within the process", "join order and draining logic",
+        "error handling inside a stage", "demo proves clean exit"],
+       interview_type="coding"),
+
+    _q("concurrency", "hard", "Implement a Read-Write Lock",
+       "Implement a read-write lock from basic primitives (mutex/condition variables): "
+       "multiple concurrent readers, exclusive writers. Choose and justify a fairness "
+       "policy that prevents writer starvation, and demonstrate reader concurrency and "
+       "writer exclusivity in main.",
+       ["no writer starvation", "reentrant behavior out of scope", "built-in RW locks not allowed"],
+       ["reader count + writer flag state design", "condition predicates for both sides",
+        "writer-preference (or fair FIFO) policy and why", "starvation scenario walkthrough",
+        "demo showing overlap of readers and exclusion of writers", "upgrade/downgrade pitfalls"],
+       interview_type="coding"),
+
+    _q("concurrency", "medium", "Implement a Connection Pool",
+       "Implement a fixed-size connection pool: acquire() blocks with timeout when "
+       "exhausted, release() returns a connection, and broken connections are replaced. "
+       "Simulate connections as objects and demonstrate contention with more threads "
+       "than connections.",
+       ["max N connections", "acquire timeout raises/returns error", "leaked handles must be detectable"],
+       ["semaphore or condition-based availability", "timeout handling on acquire",
+        "health check / replace-on-broken design", "try-finally discipline and leak detection ideas",
+        "demo with contention and timeouts", "sizing the pool discussion"],
+       interview_type="coding"),
+
+    _q("concurrency", "hard", "Implement a Multithreaded Web Crawler (Worker Pool)",
+       "Implement a crawler skeleton over a simulated in-memory link graph: a worker "
+       "pool fetches pages concurrently, a shared visited-set prevents duplicates, and "
+       "the program terminates when the frontier is exhausted. The termination condition "
+       "with idle workers is the crux — get it right and explain it.",
+       ["simulated fetch with sleep", "no page fetched twice", "clean termination, no hangs"],
+       ["work queue + visited set synchronization", "in-flight counter for termination detection",
+        "why naive empty-queue checks deadlock or exit early", "per-host politeness discussion",
+        "demo prints crawl order and totals", "scaling to distributed frontier"],
+       interview_type="coding"),
+
+    _q("concurrency", "hard", "Implement a Delayed Task Scheduler",
+       "Implement a scheduler: schedule(task, delay) runs the task after the delay using "
+       "a small worker pool and one timing thread over a priority queue. Handle tasks "
+       "scheduled out of order and wake the timer correctly when an earlier task arrives. "
+       "Demonstrate ordering in main.",
+       ["tasks may be scheduled in any order", "timer must re-wake on earlier insertions", "worker pool executes"],
+       ["min-heap by fire time + condition timed-wait", "re-wake logic on new earliest task",
+        "separation of timing thread and executor pool", "cancellation design",
+        "clock choice and drift", "demo proves out-of-order scheduling fires in order"],
+       interview_type="coding"),
 ]

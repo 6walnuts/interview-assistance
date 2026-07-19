@@ -36,6 +36,7 @@ TOPICS: list[dict] = [
     # cs fundamentals
     {"slug": "concurrency", "name": "Concurrency & Locks", "category": "cs_fundamentals", "difficulty": 3},
     {"slug": "tcp-http", "name": "TCP / HTTP", "category": "cs_fundamentals", "difficulty": 2},
+    {"slug": "ood", "name": "Object-Oriented Design", "category": "cs_fundamentals", "difficulty": 2},
     # infrastructure
     {"slug": "kafka", "name": "Kafka", "category": "infrastructure", "difficulty": 3},
     {"slug": "kubernetes", "name": "Kubernetes", "category": "infrastructure", "difficulty": 3},

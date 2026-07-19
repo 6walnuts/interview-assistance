@@ -78,11 +78,18 @@ def test_cpp_compile_error_surfaces(client):
     assert "error" in result.stderr.lower()
 
 
-def test_run_code_api_accepts_javascript(client, auth_headers):
-    created = client.post("/api/interviews", headers=auth_headers, json={
+def test_run_code_api_accepts_javascript(client):
+    # Fresh user: question selection prefers unseen questions, so a shared
+    # user would drift to other bank questions as earlier tests consume them.
+    reg = client.post("/api/auth/register", json={
+        "email": "js-sandbox@example.com", "password": "secret123", "name": "JS Runner",
+    })
+    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    created = client.post("/api/interviews", headers=headers, json={
         "interview_type": "coding", "role": "Backend Engineer", "level": "mid",
         "difficulty": "easy", "language": "javascript", "focus_areas": ["hash-map"],
     }).json()
+    auth_headers = headers
     session_id = created["session"]["id"]
     resp = client.post(f"/api/interviews/{session_id}/run-code", headers=auth_headers, json={
         "code": "function two_sum(n, t) { for (let i=0;i<n.length;i++) for (let j=i+1;j<n.length;j++) if (n[i]+n[j]===t) return [i,j]; return []; }",
