@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from .agents.llm import AgentError
 from .config import get_settings
-from .db import Base, engine
+from .db import Base, SessionLocal, engine
 from .routers import auth, coach, code, interviews, plan, profile, progress, questions, quiz, tasks, topics, voice
 
 
@@ -26,6 +26,13 @@ async def lifespan(app: FastAPI):
     # Dev convenience; production uses Alembic migrations (database/).
     Base.metadata.create_all(bind=engine)
     _apply_lightweight_migrations()
+    # Auto-seed on startup: topics/questions/quizzes insert idempotently by
+    # slug/title, so pulling an update with new bank content just needs a
+    # restart — no manual `python -m app.seed` step.
+    from .seed import seed
+
+    with SessionLocal() as db:
+        seed(db)
     yield
 
 
