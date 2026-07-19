@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import type { Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
+import SpeedSelect from "@/components/SpeedSelect";
 
 const CATEGORIES = [
   { id: "coding", name: "Coding" },
@@ -138,13 +139,16 @@ export default function LearnPage() {
             <h2 className="font-semibold">
               {tr("Coach")}{selected ? ` — ${selected.name}` : ""}
             </h2>
-            <button
-              className={`rounded-full border px-2.5 py-0.5 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
-              onClick={() => speaker.setEnabled(!speaker.enabled)}
-              title={tr("Read the coach's replies aloud")}
-            >
-              {speaker.enabled ? "🔊" : "🔇"} {tr("Auto-read")}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                className={`rounded-full border px-2.5 py-0.5 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
+                onClick={() => speaker.setEnabled(!speaker.enabled)}
+                title={tr("Read the coach's replies aloud")}
+              >
+                {speaker.enabled ? "🔊" : "🔇"} {tr("Auto-read")}
+              </button>
+              <SpeedSelect rate={speaker.rate} onChange={speaker.setRate} />
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {["explain", "quiz", "flashcards", "review_mistakes"].map((m) => (

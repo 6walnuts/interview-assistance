@@ -8,6 +8,7 @@ import type { Execution, InterviewDetail, Message } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
+import SpeedSelect from "@/components/SpeedSelect";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -311,6 +312,7 @@ export default function InterviewRoomPage() {
           >
             {speaker.enabled ? "🔊" : "🔇"} {t("Auto-read")}
           </button>
+          <SpeedSelect rate={speaker.rate} onChange={speaker.setRate} />
           <span className={`text-sm font-mono ${remaining !== null && remaining < 5 * 60_000 ? "text-red-600" : "text-slate-600"}`}>
             ⏱ {minutes}:{seconds}
           </span>

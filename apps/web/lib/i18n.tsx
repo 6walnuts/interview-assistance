@@ -116,6 +116,7 @@ const DICT: Record<string, [string, string]> = {
   "Auto-read": ["自动朗读", "Leer en voz alta"],
   "Read the interviewer's replies aloud": ["自动朗读面试官的回复", "Leer en voz alta las respuestas del entrevistador"],
   "Read the coach's replies aloud": ["自动朗读教练的回复", "Leer en voz alta las respuestas del coach"],
+  "Read-aloud speed": ["朗读速度", "Velocidad de lectura"],
   "Voice call": ["语音通话", "Llamada de voz"],
   "Hang up": ["挂断", "Colgar"],
   "Connecting…": ["连接中…", "Conectando…"],

@@ -9,6 +9,7 @@ import type { Execution, Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
+import SpeedSelect from "@/components/SpeedSelect";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -230,6 +231,7 @@ export default function TutorPage() {
           >
             {speaker.enabled ? "🔊" : "🔇"} {t("Auto-read")}
           </button>
+          <SpeedSelect rate={speaker.rate} onChange={speaker.setRate} />
           <button className="btn-secondary !py-1 text-xs" onClick={restartLesson}>{t("Restart lesson")}</button>
           <Link href={`/quiz/${slug}`} className="btn-primary !py-1 text-xs">{t("Chapter quiz →")}</Link>
         </div>
