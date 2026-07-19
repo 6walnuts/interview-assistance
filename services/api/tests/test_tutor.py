@@ -59,6 +59,26 @@ def test_duo_modes_alternate(client, auth_headers):
     assert "Question 3" in ask3.json()["reply"]
 
 
+def test_bq_duo_modes(client, auth_headers):
+    client.put("/api/profile", json={
+        "resume_text": "Led a Kafka migration at AcmeCorp; on-call lead for checkout.",
+    }, headers=auth_headers)
+
+    ask = client.post("/api/coach/chat", json={
+        "message": "[Begin: ask your first behavioral question grounded in the resume.]",
+        "mode": "bq_asker",
+    }, headers=auth_headers)
+    assert ask.status_code == 200, ask.text
+    assert "Question 1" in ask.json()["reply"]
+
+    answer = client.post("/api/coach/chat", json={
+        "message": ask.json()["reply"], "mode": "bq_answerer",
+        "history": [{"role": "assistant", "content": ask.json()["reply"]}],
+    }, headers=auth_headers)
+    assert answer.status_code == 200
+    assert answer.json()["reply"]
+
+
 def test_coach_history_capped(client, auth_headers):
     too_long = [{"role": "user", "content": f"turn {i}"} for i in range(31)]
     resp = client.post("/api/coach/chat", json={
