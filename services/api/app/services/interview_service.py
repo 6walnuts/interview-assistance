@@ -84,7 +84,9 @@ def _latest_execution_summary(db: Session, session_id: str) -> str:
 
 def handle_candidate_message(
     db: Session, session: InterviewSession, content: str, action: str
-) -> InterviewMessage:
+) -> tuple[InterviewMessage, str]:
+    """Returns the interviewer's reply and the hint_content for this turn
+    (empty unless the candidate explicitly requested a hint)."""
     db.add(InterviewMessage(
         session_id=session.id, role="candidate", content=content, stage=session.current_stage,
     ))
@@ -105,7 +107,7 @@ def handle_candidate_message(
     )
     db.add(reply)
     db.commit()
-    return reply
+    return reply, turn.hint_content
 
 
 def run_code(

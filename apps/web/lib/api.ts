@@ -111,10 +111,10 @@ export const api = {
     ),
   getInterview: (id: string) => request<InterviewDetail>(`/api/interviews/${id}`),
   sendMessage: (id: string, content: string, action = "message") =>
-    request<{ message: Message; current_stage: string }>(`/api/interviews/${id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ content, action }),
-    }),
+    request<{ message: Message; current_stage: string; hint_content: string }>(
+      `/api/interviews/${id}/messages`,
+      { method: "POST", body: JSON.stringify({ content, action }) }
+    ),
   runCode: (id: string, code: string, label: "run" | "submit", language = "python") =>
     request<{ execution: Execution }>(`/api/interviews/${id}/run-code`, {
       method: "POST",
@@ -148,10 +148,13 @@ export const api = {
     topicSlug?: string,
     history: { role: "user" | "assistant"; content: string }[] = []
   ) =>
-    request<{ reply: string; suggested_actions: string[] }>("/api/coach/chat", {
-      method: "POST",
-      body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
-    }),
+    request<{ reply: string; suggested_actions: string[]; code_snippet: string }>(
+      "/api/coach/chat",
+      {
+        method: "POST",
+        body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
+      }
+    ),
 
   runScratch: (code: string, language = "python") =>
     request<Execution>("/api/code/run", {

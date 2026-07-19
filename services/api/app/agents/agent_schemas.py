@@ -28,6 +28,9 @@ class InterviewerTurn(BaseModel):
     message: str
     stage: Stage
     action: Literal["wait_for_candidate", "end_interview"] = "wait_for_candidate"
+    # Filled only when the candidate explicitly asked for a hint: a short
+    # skeleton/outline shown next to the editor. Never the full solution.
+    hint_content: str = ""
     internal_observation: InternalObservation = InternalObservation()
 
 
@@ -76,6 +79,9 @@ class ReviewPlan(BaseModel):
 class CoachReply(BaseModel):
     reply: str
     suggested_actions: list[str] = []
+    # Optional illustrative code (hint skeletons, worked examples) shown in
+    # the practice editor panel during tutor lessons.
+    code_snippet: str = ""
 
 
 class GeneratedQuizQuestion(BaseModel):

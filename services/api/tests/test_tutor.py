@@ -38,6 +38,38 @@ def test_scratch_run_requires_auth(client):
     assert client.post("/api/code/run", json={"code": "print(1)"}).status_code == 401
 
 
+def test_interview_hint_returns_hint_content(client, auth_headers):
+    resp = client.post("/api/interviews", json={
+        "interview_type": "coding", "role": "Backend Engineer", "level": "mid",
+        "company_style": "general", "duration_minutes": 45, "difficulty": "medium",
+        "language": "python", "focus_areas": [],
+    }, headers=auth_headers)
+    session_id = resp.json()["session"]["id"]
+
+    normal = client.post(f"/api/interviews/{session_id}/messages", json={
+        "content": "I'll start with a brute force.", "action": "message",
+    }, headers=auth_headers).json()
+    assert normal["hint_content"] == ""
+
+    hint = client.post(f"/api/interviews/{session_id}/messages", json={
+        "content": "Could I get a hint?", "action": "request_hint",
+    }, headers=auth_headers).json()
+    assert "TODO" in hint["hint_content"]
+
+
+def test_coach_hint_returns_code_snippet(client, auth_headers):
+    resp = client.post("/api/coach/chat", json={
+        "message": "I'm stuck — give me a hint for this exercise.",
+        "mode": "lesson", "topic_slug": "binary-search",
+    }, headers=auth_headers).json()
+    assert "TODO" in resp["code_snippet"]
+
+    plain = client.post("/api/coach/chat", json={
+        "message": "explain the concept", "mode": "lesson", "topic_slug": "binary-search",
+    }, headers=auth_headers).json()
+    assert plain["code_snippet"] == ""
+
+
 def test_lesson_realtime_session_needs_real_key(client, auth_headers):
     resp = client.post("/api/voice/realtime-session",
                        json={"topic_slug": "binary-search"}, headers=auth_headers)

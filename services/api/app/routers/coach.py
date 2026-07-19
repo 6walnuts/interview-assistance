@@ -26,4 +26,5 @@ def chat(
     history = [{"role": t.role, "content": t.content} for t in body.history]
     reply = coach_agent.chat(body.message, body.mode, body.topic_slug, profile, skill,
                              history=history)
-    return CoachChatResponse(reply=reply.reply, suggested_actions=reply.suggested_actions)
+    return CoachChatResponse(reply=reply.reply, suggested_actions=reply.suggested_actions,
+                             code_snippet=reply.code_snippet)

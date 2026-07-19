@@ -102,6 +102,10 @@ const DICT: Record<string, [string, string]> = {
   "Restart this lesson? The current conversation will be cleared.":
     ["重新开始这节课？当前对话将被清空。", "¿Reiniciar la lección? La conversación actual se borrará."],
   "Practice editor": ["练习编辑器", "Editor de práctica"],
+  "Hint": ["提示", "Pista"],
+  "Dismiss": ["关闭", "Cerrar"],
+  "Insert into editor": ["插入编辑器", "Insertar en el editor"],
+  "Ask for a hint on the current exercise": ["就当前练习要一个提示", "Pide una pista sobre el ejercicio actual"],
   "Share with tutor": ["发给老师点评", "Compartir con el tutor"],
   "Switch the editor language": ["切换编辑器语言", "Cambiar el lenguaje del editor"],
   "explain": ["讲解", "explicar"],

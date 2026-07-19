@@ -53,6 +53,7 @@ export default function TutorPage() {
   const [code, setCode] = useState(LANGUAGES.python.starter);
   const [execution, setExecution] = useState<Execution | null>(null);
   const [running, setRunning] = useState(false);
+  const [snippet, setSnippet] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
@@ -98,6 +99,7 @@ export default function TutorPage() {
         const withReply: ChatMsg[] = [...withUser, { role: "coach", text: resp.reply }];
         setChat(withReply);
         persist(withReply);
+        if (resp.code_snippet) setSnippet(resp.code_snippet);
         if (speaker.enabled) speaker.speak(resp.reply);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Tutor unavailable");
@@ -276,6 +278,14 @@ export default function TutorPage() {
               >
                 {voice.recording ? `⏹ ${t("Stop recording")}` : voice.transcribing ? t("Transcribing…") : "🎙"}
               </button>
+              <button
+                className="btn-secondary"
+                disabled={busy}
+                title={t("Ask for a hint on the current exercise")}
+                onClick={() => void ask("I'm stuck — give me a hint for the current exercise, with a short code skeleton (not the full answer).", chat)}
+              >
+                💡 {t("Hint")}
+              </button>
             </div>
           </div>
         </div>
@@ -288,6 +298,28 @@ export default function TutorPage() {
               {Object.entries(LANGUAGES).map(([id, l]) => <option key={id} value={id}>{l.label}</option>)}
             </select>
           </div>
+          {snippet && (
+            <div className="border-b border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase text-amber-700">💡 {t("Hint")}</span>
+                <div className="flex gap-2">
+                  <button
+                    className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-amber-700"
+                    onClick={() => {
+                      const starter = LANGUAGES[lang]?.starter ?? "";
+                      setCode((c) => (c === starter || !c.trim() ? snippet : `${c}\n\n${snippet}`));
+                    }}
+                  >
+                    {t("Insert into editor")}
+                  </button>
+                  <button className="text-xs text-amber-600 hover:text-amber-800" onClick={() => setSnippet(null)}>
+                    ✕ {t("Dismiss")}
+                  </button>
+                </div>
+              </div>
+              <pre className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-amber-900">{snippet}</pre>
+            </div>
+          )}
           <div className="flex-1">
             <MonacoEditor
               language={LANGUAGES[lang].monaco}

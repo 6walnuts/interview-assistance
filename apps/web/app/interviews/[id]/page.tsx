@@ -86,6 +86,7 @@ export default function InterviewRoomPage() {
   const [editorLang, setEditorLang] = useState<string | null>(null);
   const [design, setDesign] = useState("");
   const [execution, setExecution] = useState<Execution | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -210,6 +211,7 @@ export default function InterviewRoomPage() {
         const resp = await api.sendMessage(id, content, action);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
+        if (resp.hint_content) setHint(resp.hint_content);
         // Hints are always read aloud — the reply to the hint button is the
         // one message the candidate explicitly asked to hear.
         if (speaker.enabled || action === "request_hint") speaker.speak(resp.message.content);
@@ -386,6 +388,18 @@ export default function InterviewRoomPage() {
               </ul>
             )}
           </div>
+
+          {hint && (
+            <div className="border-b border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase text-amber-700">💡 {t("Hint")}</span>
+                <button className="text-xs text-amber-600 hover:text-amber-800" onClick={() => setHint(null)}>
+                  ✕ {t("Dismiss")}
+                </button>
+              </div>
+              <pre className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-amber-900">{hint}</pre>
+            </div>
+          )}
 
           {isCoding ? (
             <>

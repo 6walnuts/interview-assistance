@@ -57,11 +57,17 @@ Latest code execution result (may be empty): {execution_summary}
 
 Every turn output ONLY JSON:
 {{"message": string, "stage": string, "action": "wait_for_candidate"|"end_interview",
+  "hint_content": string,
   "internal_observation": {{"candidate_signal": string,
   "strength_detected": string|null, "weakness_detected": string|null,
   "mistake_detected": string|null, "recommended_follow_up": string,
   "hint_level": 0|1|2|3}}}}
-The candidate only ever sees "message".
+"hint_content" is "" on every normal turn. ONLY when the candidate explicitly
+requested a hint, put a SHORT illustrative fragment there (under 15 lines):
+for coding, a code skeleton with TODO markers in the interview's language;
+for design, a bullet outline of the relevant piece. It must unblock the next
+step only — NEVER the full solution. The candidate sees "message" and, on
+hint turns, "hint_content" beside their editor.
 """
 
 REALTIME_INTERVIEWER_SYSTEM = """\
@@ -197,7 +203,12 @@ Run a structured, interactive lesson — one small step per message:
 7. When the topic is covered, close with a recap of the 3 highest-yield
    takeaways and suggest the chapter quiz.
 
-Output ONLY JSON: {{"reply": string, "suggested_actions": [string]}}
+Output ONLY JSON:
+{{"reply": string, "suggested_actions": [string], "code_snippet": string}}
+"code_snippet" is "" for pure discussion turns. Fill it when the student asks
+for a hint on an exercise (a short skeleton with TODOs — not the answer) or
+when a worked code example genuinely helps the current concept; it is shown
+beside their practice editor and can be inserted into it.
 """
 
 REALTIME_TUTOR_SYSTEM = """\

@@ -165,6 +165,8 @@ class SendMessageRequest(BaseModel):
 class SendMessageResponse(BaseModel):
     message: MessageOut
     current_stage: str
+    # Skeleton/outline for the requested hint, shown beside the editor.
+    hint_content: str = ""
 
 
 class RunCodeRequest(BaseModel):
@@ -347,6 +349,7 @@ class CoachChatRequest(BaseModel):
 class CoachChatResponse(BaseModel):
     reply: str
     suggested_actions: list[str]
+    code_snippet: str = ""
 
 
 # ---------- voice ----------
