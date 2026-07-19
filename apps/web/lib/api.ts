@@ -82,6 +82,23 @@ export const api = {
     }),
 
   getProfile: () => request<{ user: UserOut; profile: Profile }>("/api/profile"),
+  uploadResumePdf: async (file: File) => {
+    const headers: Record<string, string> = { "Content-Type": "application/pdf" };
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const resp = await fetch(`${API_URL}/api/profile/resume-upload`, {
+      method: "POST", headers, body: file,
+    });
+    if (!resp.ok) {
+      let detail = resp.statusText;
+      try {
+        const body = await resp.json();
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch { /* keep statusText */ }
+      throw new ApiError(resp.status, detail);
+    }
+    return (await resp.json()) as { user: UserOut; profile: Profile };
+  },
   updateProfile: (patch: Partial<Profile>) =>
     request<{ user: UserOut; profile: Profile }>("/api/profile", {
       method: "PUT",

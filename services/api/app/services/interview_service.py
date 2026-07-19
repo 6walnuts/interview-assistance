@@ -33,7 +33,7 @@ def _locale(db: Session, user_id: str) -> str:
     return profile.locale if profile else "en"
 
 
-RESUME_EXCERPT_CHARS = 2000
+RESUME_EXCERPT_CHARS = 4000
 
 
 def _resume(db: Session, user_id: str) -> str:

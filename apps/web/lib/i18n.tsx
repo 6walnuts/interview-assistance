@@ -37,6 +37,8 @@ const DICT: Record<string, [string, string]> = {
     ["简历（可选——面试官会据此追问你的项目经历）",
      "Currículum (opcional: el entrevistador indagará en tu experiencia)"],
   "Paste your resume as plain text…": ["把简历以纯文本粘贴到这里…", "Pega tu currículum como texto plano…"],
+  "Upload PDF resume": ["上传 PDF 简历", "Subir currículum PDF"],
+  "Parsing PDF…": ["解析 PDF 中…", "Analizando PDF…"],
   "Local mode": ["单机模式", "Modo local"],
 
   // Auth
