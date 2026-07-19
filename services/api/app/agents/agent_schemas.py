@@ -76,3 +76,29 @@ class ReviewPlan(BaseModel):
 class CoachReply(BaseModel):
     reply: str
     suggested_actions: list[str] = []
+
+
+class GeneratedQuizQuestion(BaseModel):
+    question: str
+    options: list[str] = Field(min_length=2, max_length=6)
+    answer_index: int = Field(ge=0)
+    explanation: str = ""
+    difficulty: int = Field(default=2, ge=1, le=5)
+
+
+class GeneratedQuiz(BaseModel):
+    questions: list[GeneratedQuizQuestion]
+
+
+class PlanTask(BaseModel):
+    week: int = Field(ge=1, le=16)
+    topic_slug: str | None = None
+    task_type: Literal["learn", "practice", "quiz", "design_drill", "mock_interview"] = "learn"
+    title: str
+    description: str = ""
+
+
+class StudyPlan(BaseModel):
+    summary: str
+    weeks: int = Field(ge=1, le=16)
+    tasks: list[PlanTask]

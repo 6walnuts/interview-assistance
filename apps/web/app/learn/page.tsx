@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
@@ -60,8 +61,10 @@ export default function LearnPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="grid gap-3 sm:grid-cols-2">
           {topics.map((t) => (
-            <button key={t.id} onClick={() => { setSelected(t); setChat([]); }}
-              className={`card text-left transition ${selected?.id === t.id ? "!border-brand-600" : "hover:border-slate-300"}`}>
+            <div key={t.id} role="button" tabIndex={0}
+              onClick={() => { setSelected(t); setChat([]); }}
+              onKeyDown={(e) => e.key === "Enter" && (setSelected(t), setChat([]))}
+              className={`card cursor-pointer text-left transition ${selected?.id === t.id ? "!border-brand-600" : "hover:border-slate-300"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-medium">{t.name}</p>
                 <span className="text-xs text-slate-400">D{t.difficulty}</span>
@@ -69,8 +72,14 @@ export default function LearnPage() {
               <div className="mt-2 h-1.5 rounded-full bg-slate-100">
                 <div className="h-1.5 rounded-full bg-brand-500" style={{ width: `${t.mastery?.mastery_score ?? 0}%` }} />
               </div>
-              <p className="mt-1 text-xs text-slate-500">Mastery {t.mastery?.mastery_score ?? 0}/100</p>
-            </button>
+              <div className="mt-1 flex items-center justify-between">
+                <p className="text-xs text-slate-500">Mastery {t.mastery?.mastery_score ?? 0}/100</p>
+                <Link href={`/quiz/${t.slug}`} onClick={(e) => e.stopPropagation()}
+                  className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
+                  Chapter quiz →
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
 

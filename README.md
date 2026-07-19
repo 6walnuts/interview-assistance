@@ -107,6 +107,11 @@ cd services/api && .venv/bin/python -m pytest tests -q
 
 覆盖：认证、权限隔离、完整面试闭环（创建 → 对话 → 提示 → 跑代码 → 结束 → 报告 → 自动生成 ≥3 学习任务 → 幂等）、任务完成更新 Mastery、进度接口。
 
+## 学习路线与章节测试
+
+- **学习路线**：Onboarding 完成后自动调用 Learning Planner Agent，按面试日期和每周可投入时间生成分周任务序列（`POST /api/plan/generate`，Tasks 页按 Week 分组展示，可随时重新生成，已完成任务保留为历史）。
+- **章节测试**：每个知识点有独立题库（`GET /api/quiz/{topic_slug}`），题目不足时由 Quiz Generator Agent 自动补题入库；提交判分（`POST /api/quiz/{topic_slug}/submit`）后更新 Mastery、记录错题到 common_mistakes，得分 ≥60% 自动完成对应的学习任务。
+
 ## 核心闭环（一条链路）
 
 ```

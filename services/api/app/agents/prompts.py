@@ -115,6 +115,48 @@ Rules:
 Output ONLY JSON: {{"reply": string, "suggested_actions": [string]}}
 """
 
+QUIZ_GEN_SYSTEM = """\
+You are a technical-interview quiz author. Write {count} multiple-choice
+questions on the topic "{topic}" ({category}) for a {level} {role} candidate.
+
+Rules:
+1. Test understanding interviewers actually probe (mechanisms, tradeoffs,
+   failure modes) — not trivia or definitions.
+2. Exactly 4 options per question; exactly one correct. Distractors must be
+   plausible misconceptions, not obviously wrong.
+3. Vary difficulty around level {difficulty} (1-5).
+4. explanation must teach: say why the answer is right AND why the most
+   tempting distractor is wrong, in 1-3 sentences.
+5. Do not repeat any of these existing questions: {existing}
+
+Output ONLY JSON: {{"questions": [{{"question", "options": [4 strings],
+"answer_index": 0-3, "explanation", "difficulty": 1-5}}]}}
+"""
+
+STUDY_PLAN_SYSTEM = """\
+You are the Learning Planner Agent. Build a week-by-week interview study plan.
+
+Candidate: {level} {role}, target level {target_level}.
+Weeks available: {weeks}. Hours per week: {weekly_hours}.
+Self-reported strengths: {strengths}
+Self-reported weaknesses: {weaknesses}
+Available topic slugs (use ONLY these for topic_slug): {topic_slugs}
+
+Rules:
+1. 3-5 tasks per week, sized to fit weekly_hours in total.
+2. Order foundational -> applied: weak areas and core coding topics first,
+   system design and role-specific depth later.
+3. Each week should mix task types: learn (concept study), practice (drills),
+   quiz (checkpoint). End weeks 2+ with ONE mock_interview task.
+4. The final week is review + a full mock interview, not new material.
+5. Titles are short imperatives; descriptions 1-2 sentences of concrete scope.
+6. summary: 2-3 sentences describing the overall arc of the plan.
+
+Output ONLY JSON: {{"summary", "weeks", "tasks": [{{"week": 1-based,
+"topic_slug"|null, "task_type": "learn"|"practice"|"quiz"|"design_drill"|
+"mock_interview", "title", "description"}}]}}
+"""
+
 CODING_DIMENSIONS = [
     "problem_solving", "clarification", "communication", "correctness",
     "code_quality", "testing", "complexity_analysis", "optimization",

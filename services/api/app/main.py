@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .db import Base, engine
-from .routers import auth, coach, interviews, profile, progress, tasks, topics
+from .routers import auth, coach, interviews, plan, profile, progress, quiz, tasks, topics
 
 
 @asynccontextmanager
@@ -27,7 +27,8 @@ app.add_middleware(
 )
 
 for router in (auth.router, profile.router, topics.router, tasks.router,
-               interviews.router, progress.router, coach.router):
+               interviews.router, progress.router, coach.router,
+               quiz.router, plan.router):
     app.include_router(router)
 
 

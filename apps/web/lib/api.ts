@@ -2,6 +2,9 @@
 
 import type {
   AuthResponse,
+  Quiz,
+  QuizResult,
+  StudyPlan,
   Execution,
   InterviewDetail,
   InterviewHistoryItem,
@@ -126,6 +129,17 @@ export const api = {
   progress: () => request<ProgressOverview>("/api/progress"),
   skills: () => request<Skill[]>("/api/progress/skills"),
   interviewHistory: () => request<InterviewHistoryItem[]>("/api/progress/interviews"),
+
+  getQuiz: (topicSlug: string, count = 5) =>
+    request<Quiz>(`/api/quiz/${topicSlug}?count=${count}`),
+  submitQuiz: (topicSlug: string, answers: { question_id: string; selected_index: number }[]) =>
+    request<QuizResult>(`/api/quiz/${topicSlug}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers }),
+    }),
+
+  generatePlan: () => request<StudyPlan>("/api/plan/generate", { method: "POST" }),
+  getPlan: () => request<StudyPlan>("/api/plan"),
 
   coachChat: (message: string, mode: string, topicSlug?: string) =>
     request<{ reply: string; suggested_actions: string[] }>("/api/coach/chat", {

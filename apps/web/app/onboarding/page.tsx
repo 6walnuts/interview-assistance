@@ -24,6 +24,7 @@ export default function OnboardingPage() {
   const [strengths, setStrengths] = useState<string[]>([]);
   const [weaknesses, setWeaknesses] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [planning, setPlanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function toggle(list: string[], setList: (v: string[]) => void, value: string) {
@@ -47,11 +48,18 @@ export default function OnboardingPage() {
         weaknesses,
         onboarding_completed: true,
       });
-      router.push("/dashboard");
+      // Turn the profile into a week-by-week study plan before landing.
+      setPlanning(true);
+      try {
+        await api.generatePlan();
+      } catch {
+        // Non-fatal: the plan can be generated later from the Tasks page.
+      }
+      router.push("/tasks");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
       setBusy(false);
+      setPlanning(false);
     }
   }
 
@@ -129,7 +137,9 @@ export default function OnboardingPage() {
             ))}
           </div>
         </div>
-        <button className="btn-primary w-full" disabled={busy}>{busy ? "Saving…" : "Finish setup"}</button>
+        <button className="btn-primary w-full" disabled={busy}>
+          {planning ? "Building your study plan…" : busy ? "Saving…" : "Finish setup & build my study plan"}
+        </button>
       </form>
     </div>
   );

@@ -252,6 +252,68 @@ class InterviewHistoryItem(BaseModel):
     ended_at: datetime | None
 
 
+# ---------- quiz ----------
+class QuizQuestionOut(BaseModel):
+    id: str
+    question: str
+    options: list[str]
+    difficulty: int
+
+
+class QuizOut(BaseModel):
+    topic_id: str
+    topic_slug: str
+    topic_name: str
+    questions: list[QuizQuestionOut]
+
+
+class QuizAnswerIn(BaseModel):
+    question_id: str
+    selected_index: int = Field(ge=0)
+
+
+class QuizSubmitRequest(BaseModel):
+    answers: list[QuizAnswerIn] = Field(min_length=1)
+
+
+class QuizResultItem(BaseModel):
+    question_id: str
+    question: str
+    options: list[str]
+    selected_index: int
+    correct_index: int
+    is_correct: bool
+    explanation: str
+
+
+class QuizSubmitResponse(BaseModel):
+    correct: int
+    total: int
+    mastery_score: int
+    skill_level: int
+    completed_task_ids: list[str]
+    results: list[QuizResultItem]
+
+
+# ---------- study plan ----------
+class PlanTaskOut(BaseModel):
+    id: str
+    week: int
+    title: str
+    description: str
+    task_type: str
+    topic_slug: str | None
+    status: str
+    due_at: datetime | None
+
+
+class StudyPlanResponse(BaseModel):
+    summary: str
+    weeks: int
+    task_count: int
+    tasks: list[PlanTaskOut]
+
+
 # ---------- coach ----------
 class CoachChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)

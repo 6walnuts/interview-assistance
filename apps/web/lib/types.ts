@@ -147,6 +147,57 @@ export interface Skill {
   last_practiced_at: string | null;
 }
 
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  difficulty: number;
+}
+
+export interface Quiz {
+  topic_id: string;
+  topic_slug: string;
+  topic_name: string;
+  questions: QuizQuestion[];
+}
+
+export interface QuizResultItem {
+  question_id: string;
+  question: string;
+  options: string[];
+  selected_index: number;
+  correct_index: number;
+  is_correct: boolean;
+  explanation: string;
+}
+
+export interface QuizResult {
+  correct: number;
+  total: number;
+  mastery_score: number;
+  skill_level: number;
+  completed_task_ids: string[];
+  results: QuizResultItem[];
+}
+
+export interface PlanTask {
+  id: string;
+  week: number;
+  title: string;
+  description: string;
+  task_type: string;
+  topic_slug: string | null;
+  status: string;
+  due_at: string | null;
+}
+
+export interface StudyPlan {
+  summary: string;
+  weeks: number;
+  task_count: number;
+  tasks: PlanTask[];
+}
+
 export interface InterviewHistoryItem {
   session_id: string;
   interview_type: string;
