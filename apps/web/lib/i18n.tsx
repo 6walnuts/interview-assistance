@@ -98,6 +98,7 @@ const DICT: Record<string, [string, string]> = {
 
   // Learn page
   "Chapter quiz →": ["章节测试 →", "Quiz del capítulo →"],
+  "Classic questions on this topic": ["本知识点相关经典题", "Preguntas clásicas de este tema"],
   "Mastery": ["掌握度", "Dominio"],
   "Coach": ["教练", "Coach"],
   "Pick a topic to start learning.": ["选择一个知识点开始学习。", "Elige un tema para empezar a aprender."],

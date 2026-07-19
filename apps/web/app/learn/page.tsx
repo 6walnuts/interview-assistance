@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
-import type { Topic } from "@/lib/types";
+import type { QuestionSummary, Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import SpeedSelect from "@/components/SpeedSelect";
@@ -41,6 +41,18 @@ export default function LearnPage() {
   );
 
   const chat = selected ? chats[selected.slug] ?? [] : [];
+
+  // Classic questions tagged with the selected topic, if any.
+  const [related, setRelated] = useState<QuestionSummary[]>([]);
+  useEffect(() => {
+    if (!selected) {
+      setRelated([]);
+      return;
+    }
+    api.listQuestions({ category: selected.slug })
+      .then(setRelated)
+      .catch(() => setRelated([]));
+  }, [selected]);
 
   useEffect(() => {
     try {
@@ -197,6 +209,29 @@ export default function LearnPage() {
             ))}
             {busy && <p className="text-xs text-slate-400">{tr("Coach is thinking…")}</p>}
           </div>
+          {selected && related.length > 0 && (
+            <div className="mt-3 border-t border-slate-100 pt-2">
+              <p className="text-xs font-semibold text-slate-500">
+                🎯 {tr("Classic questions on this topic")} ({related.length})
+              </p>
+              <div className="mt-1.5 max-h-28 space-y-1.5 overflow-y-auto">
+                {related.map((q) => (
+                  <div key={q.id} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate text-slate-700">
+                      {q.title}
+                      <span className="ml-1.5 text-xs text-slate-400">{tr(q.difficulty)}</span>
+                    </span>
+                    <Link
+                      className="shrink-0 rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+                      href={`/interviews/new?question_id=${q.id}&type=${q.interview_type}&title=${encodeURIComponent(q.title)}`}
+                    >
+                      {tr("Interview with this question")}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-2 flex gap-2">
             <input className="input" placeholder={tr("Ask the coach…")} value={input}
               onChange={(e) => setInput(e.target.value)}
