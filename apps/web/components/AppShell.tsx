@@ -11,6 +11,7 @@ const NAV = [
   { href: "/learn", label: "Learn" },
   { href: "/practice", label: "Practice" },
   { href: "/interviews/new", label: "Mock Interview" },
+  { href: "/questions", label: "Questions" },
   { href: "/tasks", label: "Tasks" },
   { href: "/progress", label: "Progress" },
 ];

@@ -87,7 +87,8 @@ export default function TutorPage() {
       setBusy(true);
       setError(null);
       const withUser: ChatMsg[] = [...existing, { role: "user", text: message }];
-      setChat(withUser);
+      // The reply streams into a live coach bubble as tokens arrive.
+      setChat([...withUser, { role: "coach", text: "" }]);
       persist(withUser);
       setInput("");
       try {
@@ -95,7 +96,12 @@ export default function TutorPage() {
           role: m.role === "coach" ? ("assistant" as const) : ("user" as const),
           content: m.text,
         }));
-        const resp = await api.coachChat(message, "lesson", slug, history);
+        let streamed = "";
+        const resp = await api.streamCoachChat(message, "lesson", slug, history, (delta) => {
+          streamed += delta;
+          const partial = streamed;
+          setChat([...withUser, { role: "coach", text: partial }]);
+        });
         const withReply: ChatMsg[] = [...withUser, { role: "coach", text: resp.reply }];
         setChat(withReply);
         persist(withReply);
@@ -103,6 +109,7 @@ export default function TutorPage() {
         if (speaker.enabled) speaker.speak(resp.reply);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Tutor unavailable");
+        setChat(withUser); // drop the empty streaming bubble
       } finally {
         setBusy(false);
       }

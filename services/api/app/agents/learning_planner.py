@@ -69,6 +69,7 @@ def generate_study_plan(profile: UserProfile, topics: list[LearningTopic]) -> St
         weekly_hours=profile.weekly_hours,
         strengths=", ".join(profile.strengths or []) or "(none given)",
         weaknesses=", ".join(profile.weaknesses or []) or "(none given)",
+        resume=(profile.resume_text or "").strip()[:2000] or "(none provided)",
         topic_slugs=", ".join(topic_slugs),
     )
     messages = [{"role": "user", "content": "Generate the study plan now."}]

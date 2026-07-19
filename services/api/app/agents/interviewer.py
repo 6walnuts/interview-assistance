@@ -75,6 +75,7 @@ def next_turn(
     action: str = "message",
     execution_summary: str = "",
     locale: str = "en",
+    resume: str = "",
 ) -> InterviewerTurn:
     """transcript: [{"role": "interviewer"|"candidate", "content": ...}] oldest first."""
     system = language_instruction(locale) + INTERVIEWER_SYSTEM.format(
@@ -83,6 +84,7 @@ def next_turn(
         role=session.role,
         interview_type=session.interview_type,
         question=_format_question(question),
+        resume=resume or "(none provided)",
         current_stage=session.current_stage,
         hint_count=session.hint_count,
         execution_summary=execution_summary or "(none)",

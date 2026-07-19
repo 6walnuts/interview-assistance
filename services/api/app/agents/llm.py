@@ -64,6 +64,149 @@ def _parse(raw: str, schema: type[T]) -> T:
     return schema.model_validate(json.loads(text))
 
 
+_ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f",
+            "n": "\n", "r": "\r", "t": "\t"}
+
+
+class _ReplyFieldExtractor:
+    """Incrementally decodes the string value of one field from a streamed
+    JSON object, so the reply can be forwarded token-by-token while the rest
+    of the JSON (actions, snippets) is parsed once the stream completes.
+    Handles escape sequences split across chunk boundaries."""
+
+    def __init__(self, field: str):
+        self._marker = re.compile(r'"%s"\s*:\s*"' % re.escape(field))
+        self.raw = ""
+        self._start: int | None = None
+        self._pos = 0
+        self._escape = ""
+        self.done = False
+
+    def feed(self, chunk: str) -> str:
+        self.raw += chunk
+        if self.done:
+            return ""
+        if self._start is None:
+            m = self._marker.search(self.raw)
+            if not m:
+                return ""
+            self._start = self._pos = m.end()
+        out: list[str] = []
+        s = self.raw
+        i = self._pos
+        while i < len(s):
+            c = s[i]
+            if self._escape:
+                self._escape += c
+                if self._escape[1] == "u":
+                    if len(self._escape) == 6:
+                        try:
+                            out.append(chr(int(self._escape[2:], 16)))
+                        except ValueError:
+                            pass
+                        self._escape = ""
+                else:
+                    out.append(_ESCAPES.get(self._escape[1], self._escape[1]))
+                    self._escape = ""
+            elif c == "\\":
+                self._escape = "\\"
+            elif c == '"':
+                self.done = True
+                i += 1
+                break
+            else:
+                out.append(c)
+            i += 1
+        self._pos = i
+        return "".join(out)
+
+
+def stream_reply(
+    system: str,
+    messages: list[dict[str, str]],
+    schema: type[T],
+    mock_factory: Callable[[], T],
+    reply_field: str = "reply",
+):
+    """Yield ("delta", text) chunks of the reply field as the model streams,
+    then ("final", validated_schema_instance). If the completed JSON fails
+    validation, the final falls back to a reply-only instance so the user
+    still gets the streamed text."""
+    settings = get_settings()
+    if not settings.ai_enabled:
+        mock = mock_factory()
+        text = getattr(mock, reply_field)
+        for i in range(0, len(text), 24):
+            yield ("delta", text[i:i + 24])
+        yield ("final", mock)
+        return
+    if settings.llm_provider == "anthropic":
+        yield from _stream_anthropic(system, messages, schema, reply_field)
+    else:
+        yield from _stream_openai_compatible(system, messages, schema, reply_field)
+
+
+def _finalize_stream(extractor: _ReplyFieldExtractor, decoded: str,
+                     schema: type[T], reply_field: str) -> T:
+    try:
+        return _parse(extractor.raw, schema)
+    except (ValidationError, json.JSONDecodeError):
+        logger.warning("Streamed output failed validation; falling back to reply-only")
+        return schema(**{reply_field: decoded})
+
+
+def _stream_openai_compatible(system: str, messages: list[dict], schema: type[T],
+                              reply_field: str):
+    from openai import OpenAI, OpenAIError
+
+    settings = get_settings()
+    client = OpenAI(api_key=_validated_api_key(settings), base_url=settings.resolved_base_url)
+    extractor = _ReplyFieldExtractor(reply_field)
+    decoded: list[str] = []
+    try:
+        stream = client.chat.completions.create(
+            model=settings.resolved_model,
+            messages=[{"role": "system", "content": system}, *messages],
+            response_format={"type": "json_object"},
+            temperature=0.4,
+            stream=True,
+        )
+        for event in stream:
+            delta = event.choices[0].delta.content if event.choices else None
+            if delta:
+                text = extractor.feed(delta)
+                if text:
+                    decoded.append(text)
+                    yield ("delta", text)
+    except OpenAIError as exc:
+        raise _friendly_provider_error(exc, settings.llm_provider) from exc
+    yield ("final", _finalize_stream(extractor, "".join(decoded), schema, reply_field))
+
+
+def _stream_anthropic(system: str, messages: list[dict], schema: type[T], reply_field: str):
+    import anthropic
+
+    settings = get_settings()
+    client = anthropic.Anthropic(api_key=_validated_api_key(settings))
+    chat = [dict(m) for m in messages]
+    if not chat or chat[0]["role"] != "user":
+        chat.insert(0, {"role": "user", "content": "[The session begins.]"})
+    extractor = _ReplyFieldExtractor(reply_field)
+    decoded: list[str] = []
+    try:
+        with client.messages.stream(
+            model=settings.resolved_model, max_tokens=16000, system=system, messages=chat,
+        ) as stream:
+            for text_chunk in stream.text_stream:
+                text = extractor.feed(text_chunk)
+                if text:
+                    decoded.append(text)
+                    yield ("delta", text)
+    except anthropic.AnthropicError as exc:
+        raise _friendly_provider_error(exc, "anthropic") from exc
+    yield ("final", _finalize_stream(extractor, "".join(decoded), schema, reply_field))
+
+
 def complete_json(
     system: str,
     messages: list[dict[str, str]],

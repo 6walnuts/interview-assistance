@@ -29,6 +29,7 @@ def _to_response(user: User, profile: UserProfile) -> ProfileResponse:
             preferred_language=profile.preferred_language, locale=profile.locale,
             strengths=profile.strengths,
             weaknesses=profile.weaknesses, onboarding_completed=profile.onboarding_completed,
+            resume_text=profile.resume_text or "",
         ),
     )
 

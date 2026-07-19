@@ -52,6 +52,12 @@ Hard rules:
 The question for this interview:
 {question}
 
+Candidate resume excerpt (may be empty): {resume}
+If a resume is present, occasionally connect your probing to their claimed
+experience when it is relevant to the current stage (e.g. "your resume
+mentions Kafka — how does that shape your approach here?"). Never mock or
+judge the resume itself.
+
 Current stage: {current_stage}. Hints used so far: {hint_count}.
 Latest code execution result (may be empty): {execution_summary}
 
@@ -77,6 +83,10 @@ You are a professional interviewer, NOT a teacher.
 
 The question for this interview:
 {question}
+
+Candidate resume excerpt (may be empty): {resume}
+If present, occasionally probe claims from it when relevant to the current
+stage; never judge the resume itself.
 
 You drive the interview through this stage machine, in order (skip stages that
 don't apply to the conversation):
@@ -257,6 +267,9 @@ Candidate: {level} {role}, target level {target_level}.
 Weeks available: {weeks}. Hours per week: {weekly_hours}.
 Self-reported strengths: {strengths}
 Self-reported weaknesses: {weaknesses}
+Resume excerpt (may be empty — if present, use it to spot gaps between the
+candidate's actual experience and the target role, and bias the plan toward
+closing them): {resume}
 Available topic slugs (use ONLY these for topic_slug): {topic_slugs}
 
 Rules:

@@ -121,7 +121,7 @@ def tts(body: TTSRequest, user: User = Depends(get_current_user)) -> Response:
 
 # ---------- realtime voice calls ----------
 
-def _realtime_instructions(session, question, locale: str) -> str:
+def _realtime_instructions(session, question, locale: str, resume: str = "") -> str:
     from ..agents.interviewer import _format_question
     from ..agents.prompts import REALTIME_INTERVIEWER_SYSTEM
 
@@ -131,6 +131,7 @@ def _realtime_instructions(session, question, locale: str) -> str:
         role=session.role,
         interview_type=session.interview_type,
         question=_format_question(question),
+        resume=resume or "(none provided)",
         current_stage=session.current_stage,
     )
 
@@ -218,7 +219,10 @@ def realtime_session(
     key = _validated_api_key(settings)
     base_url = settings.resolved_base_url or "https://api.openai.com/v1"
     if body.interview_id:
-        instructions = _realtime_instructions(session, session.question, _locale(db, user.id))
+        from ..services.interview_service import _resume
+
+        instructions = _realtime_instructions(session, session.question, _locale(db, user.id),
+                                              resume=_resume(db, user.id))
         tools = _realtime_tools()
     else:
         # Voice tutor lesson: no stage machine, no tools — just teaching.

@@ -33,14 +33,30 @@ def _locale(db: Session, user_id: str) -> str:
     return profile.locale if profile else "en"
 
 
+RESUME_EXCERPT_CHARS = 2000
+
+
+def _resume(db: Session, user_id: str) -> str:
+    profile = db.scalars(select(UserProfile).where(UserProfile.user_id == user_id)).first()
+    text = (profile.resume_text or "").strip() if profile else ""
+    return text[:RESUME_EXCERPT_CHARS]
+
+
 def create_session(db: Session, user: User, config: dict) -> tuple[InterviewSession, Question, InterviewMessage]:
-    question = planner.pick_question(
-        db,
-        interview_type=config["interview_type"],
-        difficulty=config["difficulty"],
-        focus_areas=config.get("focus_areas", []),
-        user_id=user.id,
-    )
+    question_id = config.pop("question_id", None)
+    if question_id:
+        # Explicit pick from the question-bank browser.
+        question = db.get(Question, question_id)
+        if question is None or question.interview_type != config["interview_type"]:
+            raise ValueError("Selected question not found for this interview type.")
+    else:
+        question = planner.pick_question(
+            db,
+            interview_type=config["interview_type"],
+            difficulty=config["difficulty"],
+            focus_areas=config.get("focus_areas", []),
+            user_id=user.id,
+        )
     if question is None:
         raise ValueError("No question available for this interview type. Run the seed script.")
 
@@ -49,7 +65,7 @@ def create_session(db: Session, user: User, config: dict) -> tuple[InterviewSess
     db.flush()
 
     turn = interviewer.next_turn(session, question, transcript=[], action="message",
-                                 locale=_locale(db, user.id))
+                                 locale=_locale(db, user.id), resume=_resume(db, user.id))
     session.current_stage = turn.stage
     opening = InterviewMessage(
         session_id=session.id, role="interviewer", content=turn.message,
@@ -98,7 +114,7 @@ def handle_candidate_message(
     turn = interviewer.next_turn(
         session, session.question, _transcript(db, session.id),
         action=action, execution_summary=_latest_execution_summary(db, session.id),
-        locale=_locale(db, session.user_id),
+        locale=_locale(db, session.user_id), resume=_resume(db, session.user_id),
     )
     session.current_stage = turn.stage
     reply = InterviewMessage(

@@ -61,6 +61,7 @@ class ProfileOut(BaseModel):
     strengths: list[str]
     weaknesses: list[str]
     onboarding_completed: bool
+    resume_text: str = ""
 
 
 class ProfileResponse(BaseModel):
@@ -111,6 +112,17 @@ class InterviewCreate(BaseModel):
     difficulty: Difficulty = "medium"
     language: str = "python"
     focus_areas: list[str] = []
+    # Explicit question pick from the bank browser; None = planner selects.
+    question_id: str | None = None
+
+
+class QuestionSummary(BaseModel):
+    id: str
+    title: str
+    interview_type: str
+    category: str
+    difficulty: str
+    prompt_preview: str
 
 
 class QuestionOut(BaseModel):

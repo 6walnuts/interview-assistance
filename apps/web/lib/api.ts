@@ -2,6 +2,7 @@
 
 import type {
   AuthResponse,
+  QuestionSummary,
   Quiz,
   QuizResult,
   StudyPlan,
@@ -95,6 +96,13 @@ export const api = {
   completeTask: (taskId: string) =>
     request<Task>(`/api/tasks/${taskId}/complete`, { method: "POST" }),
 
+  listQuestions: (filters: { interview_type?: string; category?: string; difficulty?: string } = {}) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);
+    const qs = params.toString();
+    return request<QuestionSummary[]>(`/api/questions${qs ? `?${qs}` : ""}`);
+  },
+
   createInterview: (config: {
     interview_type: string;
     role: string;
@@ -104,6 +112,7 @@ export const api = {
     difficulty: string;
     language: string;
     focus_areas: string[];
+    question_id?: string | null;
   }) =>
     request<{ session: InterviewSession; question: Question; opening_message: Message }>(
       "/api/interviews",
@@ -161,6 +170,52 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ code, language }),
     }),
+
+  streamCoachChat: async (
+    message: string,
+    mode: string,
+    topicSlug: string | undefined,
+    history: { role: "user" | "assistant"; content: string }[],
+    onDelta: (text: string) => void
+  ): Promise<{ reply: string; suggested_actions: string[]; code_snippet: string }> => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const resp = await fetch(`${API_URL}/api/coach/chat/stream`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null, history }),
+    });
+    if (!resp.ok || !resp.body) {
+      let detail = resp.statusText;
+      try {
+        const body = await resp.json();
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch { /* keep statusText */ }
+      throw new ApiError(resp.status, detail);
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let final: { reply: string; suggested_actions: string[]; code_snippet: string } | null = null;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+      for (const raw of events) {
+        const line = raw.trim();
+        if (!line.startsWith("data:")) continue;
+        const ev = JSON.parse(line.slice(5));
+        if (ev.error) throw new ApiError(502, ev.error);
+        if (ev.delta) onDelta(ev.delta as string);
+        if (ev.done) final = ev;
+      }
+    }
+    if (!final) throw new ApiError(502, "Stream ended unexpectedly");
+    return final;
+  },
 
   addVoiceTranscript: (interviewId: string, role: "candidate" | "interviewer", content: string) =>
     request<Message>("/api/voice/realtime-transcript", {
