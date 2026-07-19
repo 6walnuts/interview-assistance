@@ -1,0 +1,4 @@
+# Build: docker build -t ai-coach-sandbox-python:latest -f Dockerfile.python .
+FROM python:3.12-slim
+USER 65534:65534
+WORKDIR /tmp

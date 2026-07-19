@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: coach
+      POSTGRES_PASSWORD: coach_dev_password
+      POSTGRES_DB: interview_coach
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ../services/api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://coach:coach_dev_password@postgres:5432/interview_coach
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      MOCK_AI: ${MOCK_AI:-true}
+      SANDBOX_MODE: docker
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    # Sandbox containers are spawned via the host Docker daemon.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  pgdata:

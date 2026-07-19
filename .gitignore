@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+.env
+.venv/
+venv/
+
+node_modules/
+.next/
+apps/web/public/monaco/
+out/
+dist/
+
+.DS_Store
+*.log
+*.tsbuildinfo
