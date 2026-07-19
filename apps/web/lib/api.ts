@@ -119,10 +119,10 @@ export const api = {
       { method: "POST", body: JSON.stringify(config) }
     ),
   getInterview: (id: string) => request<InterviewDetail>(`/api/interviews/${id}`),
-  sendMessage: (id: string, content: string, action = "message") =>
+  sendMessage: (id: string, content: string, action = "message", currentCode = "") =>
     request<{ message: Message; current_stage: string; hint_content: string }>(
       `/api/interviews/${id}/messages`,
-      { method: "POST", body: JSON.stringify({ content, action }) }
+      { method: "POST", body: JSON.stringify({ content, action, current_code: currentCode }) }
     ),
   runCode: (id: string, code: string, label: "run" | "submit", language = "python") =>
     request<{ execution: Execution }>(`/api/interviews/${id}/run-code`, {

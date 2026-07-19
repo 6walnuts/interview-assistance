@@ -60,6 +60,8 @@ judge the resume itself.
 
 Current stage: {current_stage}. Hints used so far: {hint_count}.
 Latest code execution result (may be empty): {execution_summary}
+Candidate's current editor code (may be empty):
+{current_code}
 
 Every turn output ONLY JSON:
 {{"message": string, "stage": string, "action": "wait_for_candidate"|"end_interview",
@@ -69,11 +71,16 @@ Every turn output ONLY JSON:
   "mistake_detected": string|null, "recommended_follow_up": string,
   "hint_level": 0|1|2|3}}}}
 "hint_content" is "" on every normal turn. ONLY when the candidate explicitly
-requested a hint, put a SHORT illustrative fragment there (under 15 lines):
-for coding, a code skeleton with TODO markers in the interview's language;
-for design, a bullet outline of the relevant piece. It must unblock the next
-step only — NEVER the full solution. The candidate sees "message" and, on
-hint turns, "hint_content" beside their editor.
+requested a hint, fill it:
+- If the candidate's current editor code is provided, return THEIR code with
+  minimal edits — keep their structure and naming, and add TODO comments (or
+  a small correction) marking exactly the next step. It replaces their editor
+  content, so it must be complete, valid code in the interview's language.
+- If their editor is empty, return a short fresh skeleton (under 15 lines)
+  with TODO markers; for design interviews, a bullet outline instead.
+Either way it must unblock the next step only — NEVER the full solution.
+The candidate sees "message" and, on hint turns, "hint_content" beside their
+editor.
 """
 
 REALTIME_INTERVIEWER_SYSTEM = """\

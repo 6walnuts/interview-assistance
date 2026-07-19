@@ -64,23 +64,10 @@ export default function TutorPage() {
     setError
   );
 
-  const storageKey = `aic_tutor_${slug}`;
-
   // Live voice lesson (WebRTC to OpenAI Realtime, tutor persona, no tools).
   // Transcripts land in the lesson chat, so text and voice share one history.
   const [callState, setCallState] = useState<"idle" | "connecting" | "live">("idle");
   const callRef = useRef<RealtimeConnection | null>(null);
-
-  const persist = useCallback(
-    (msgs: ChatMsg[]) => {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(msgs));
-      } catch {
-        /* keep in-memory history */
-      }
-    },
-    [storageKey]
-  );
 
   const ask = useCallback(
     async (message: string, existing: ChatMsg[]) => {
@@ -89,7 +76,6 @@ export default function TutorPage() {
       const withUser: ChatMsg[] = [...existing, { role: "user", text: message }];
       // The reply streams into a live coach bubble as tokens arrive.
       setChat([...withUser, { role: "coach", text: "" }]);
-      persist(withUser);
       setInput("");
       try {
         const history = existing.slice(-HISTORY_SENT).map((m) => ({
@@ -102,9 +88,7 @@ export default function TutorPage() {
           const partial = streamed;
           setChat([...withUser, { role: "coach", text: partial }]);
         });
-        const withReply: ChatMsg[] = [...withUser, { role: "coach", text: resp.reply }];
-        setChat(withReply);
-        persist(withReply);
+        setChat([...withUser, { role: "coach", text: resp.reply }]);
         if (resp.code_snippet) setSnippet(resp.code_snippet);
         if (speaker.enabled) speaker.speak(resp.reply);
       } catch (e) {
@@ -114,19 +98,12 @@ export default function TutorPage() {
         setBusy(false);
       }
     },
-    [persist, slug, speaker.enabled, speaker.speak]
+    [slug, speaker.enabled, speaker.speak]
   );
 
-  const appendVoiceLine = useCallback(
-    (role: "user" | "coach", text: string) => {
-      setChat((c) => {
-        const next: ChatMsg[] = [...c, { role, text }];
-        persist(next);
-        return next;
-      });
-    },
-    [persist]
-  );
+  const appendVoiceLine = useCallback((role: "user" | "coach", text: string) => {
+    setChat((c) => [...c, { role, text }]);
+  }, []);
 
   const toggleCall = useCallback(async () => {
     if (callRef.current) {
@@ -159,19 +136,17 @@ export default function TutorPage() {
       .catch(() => undefined);
   }, [slug]);
 
-  // Restore the lesson, or auto-start a fresh one.
+  // Every visit is a fresh lesson: no history carries over after leaving.
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    let saved: ChatMsg[] = [];
     try {
-      saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as ChatMsg[];
+      localStorage.removeItem(`aic_tutor_${slug}`); // clean up pre-change saves
     } catch {
-      saved = [];
+      /* ignore */
     }
-    if (saved.length > 0) setChat(saved);
-    else void ask("Start the lesson from the beginning.", []);
-  }, [storageKey, ask]);
+    void ask("Start the lesson from the beginning.", []);
+  }, [slug, ask]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -207,7 +182,6 @@ export default function TutorPage() {
     if (!window.confirm(t("Restart this lesson? The current conversation will be cleared."))) return;
     callRef.current?.stop();
     callRef.current = null;
-    persist([]);
     setChat([]);
     void ask("Start the lesson from the beginning.", []);
   }

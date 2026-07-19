@@ -99,7 +99,8 @@ def _latest_execution_summary(db: Session, session_id: str) -> str:
 
 
 def handle_candidate_message(
-    db: Session, session: InterviewSession, content: str, action: str
+    db: Session, session: InterviewSession, content: str, action: str,
+    current_code: str = "",
 ) -> tuple[InterviewMessage, str]:
     """Returns the interviewer's reply and the hint_content for this turn
     (empty unless the candidate explicitly requested a hint)."""
@@ -115,6 +116,7 @@ def handle_candidate_message(
         session, session.question, _transcript(db, session.id),
         action=action, execution_summary=_latest_execution_summary(db, session.id),
         locale=_locale(db, session.user_id), resume=_resume(db, session.user_id),
+        current_code=current_code if action == "request_hint" else "",
     )
     session.current_stage = turn.stage
     reply = InterviewMessage(

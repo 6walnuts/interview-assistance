@@ -56,6 +56,15 @@ def test_interview_hint_returns_hint_content(client, auth_headers):
     }, headers=auth_headers).json()
     assert "TODO" in hint["hint_content"]
 
+    # With editor contents attached, the hint builds on the candidate's code.
+    my_code = "def two_sum(nums, target):\n    seen = {}\n"
+    based = client.post(f"/api/interviews/{session_id}/messages", json={
+        "content": "Could I get a hint?", "action": "request_hint",
+        "current_code": my_code,
+    }, headers=auth_headers).json()
+    assert "seen = {}" in based["hint_content"]
+    assert "TODO" in based["hint_content"]
+
 
 def test_coach_hint_returns_code_snippet(client, auth_headers):
     resp = client.post("/api/coach/chat", json={

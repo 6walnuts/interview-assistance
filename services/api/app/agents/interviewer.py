@@ -29,21 +29,26 @@ _MOCK_LINES: dict[str, str] = {
 }
 
 
-def _mock_turn(session: InterviewSession, action: str) -> InterviewerTurn:
+def _mock_turn(session: InterviewSession, action: str, current_code: str = "") -> InterviewerTurn:
     current = session.current_stage if session.current_stage in STAGES else "introduction"
     idx = STAGES.index(current)
     if action == "request_hint":
         level = min(session.hint_count + 1, 3)
+        if current_code.strip():
+            # Base the hint on the candidate's own code (mock: annotate it).
+            hint = (current_code.rstrip() +
+                    "\n# TODO (mock hint): handle the boundary case your code misses\n")
+        else:
+            hint = ("# Hint skeleton (mock)\n"
+                    "def solve(data):\n"
+                    "    # TODO: handle the empty input case first\n"
+                    "    # TODO: what happens at the last element?\n"
+                    "    ...\n")
         return InterviewerTurn(
             message="I won't give it away, but consider what happens at the boundaries of "
                     "your input — what case are you not handling yet?",
             stage=current,  # hints do not advance the stage
-            hint_content=(
-                "# Hint skeleton (mock)\n"
-                "def solve(data):\n"
-                "    # TODO: handle the empty input case first\n"
-                "    # TODO: what happens at the last element?\n"
-                "    ...\n"),
+            hint_content=hint,
             internal_observation=InternalObservation(
                 candidate_signal="asked for a hint", hint_level=level,
                 recommended_follow_up="check if the hint unblocks them"),
@@ -76,6 +81,7 @@ def next_turn(
     execution_summary: str = "",
     locale: str = "en",
     resume: str = "",
+    current_code: str = "",
 ) -> InterviewerTurn:
     """transcript: [{"role": "interviewer"|"candidate", "content": ...}] oldest first."""
     system = language_instruction(locale) + INTERVIEWER_SYSTEM.format(
@@ -88,6 +94,7 @@ def next_turn(
         current_stage=session.current_stage,
         hint_count=session.hint_count,
         execution_summary=execution_summary or "(none)",
+        current_code=current_code or "(empty)",
     )
     messages = [
         {"role": "assistant" if m["role"] == "interviewer" else "user", "content": m["content"]}
@@ -95,4 +102,5 @@ def next_turn(
     ]
     if action == "request_hint":
         messages.append({"role": "user", "content": "[The candidate pressed the Request Hint button.]"})
-    return complete_json(system, messages, InterviewerTurn, lambda: _mock_turn(session, action))
+    return complete_json(system, messages, InterviewerTurn,
+                         lambda: _mock_turn(session, action, current_code))

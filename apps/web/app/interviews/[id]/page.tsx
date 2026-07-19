@@ -87,6 +87,8 @@ export default function InterviewRoomPage() {
   const [design, setDesign] = useState("");
   const [execution, setExecution] = useState<Execution | null>(null);
   const [hint, setHint] = useState<string | null>(null);
+  // Editor contents before a hint replaced them, so the candidate can revert.
+  const [preHintCode, setPreHintCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -207,11 +209,22 @@ export default function InterviewRoomPage() {
       };
       setMessages((m) => [...m, optimistic]);
       setInput("");
+      const isCodingRoom = detail?.session.interview_type === "coding";
       try {
-        const resp = await api.sendMessage(id, content, action);
+        // Hint requests carry the editor contents so the hint builds on the
+        // candidate's own code rather than a generic skeleton.
+        const codeForHint = action === "request_hint" && isCodingRoom ? code : "";
+        const resp = await api.sendMessage(id, content, action, codeForHint);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
-        if (resp.hint_content) setHint(resp.hint_content);
+        if (resp.hint_content) {
+          setHint(resp.hint_content);
+          if (isCodingRoom) {
+            // Apply the hint directly to the editor, keeping a revert point.
+            setPreHintCode(code);
+            setCode(resp.hint_content);
+          }
+        }
         // Hints are always read aloud — the reply to the hint button is the
         // one message the candidate explicitly asked to hear.
         if (speaker.enabled || action === "request_hint") speaker.speak(resp.message.content);
@@ -221,7 +234,7 @@ export default function InterviewRoomPage() {
         setBusy(false);
       }
     },
-    [busy, id, stage, speaker.enabled, speaker.speak]
+    [busy, id, stage, code, detail, speaker.enabled, speaker.speak]
   );
 
   const activeLang = editorLang ?? detail?.session.language ?? "python";
@@ -392,10 +405,26 @@ export default function InterviewRoomPage() {
           {hint && (
             <div className="border-b border-amber-200 bg-amber-50 p-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase text-amber-700">💡 {t("Hint")}</span>
-                <button className="text-xs text-amber-600 hover:text-amber-800" onClick={() => setHint(null)}>
-                  ✕ {t("Dismiss")}
-                </button>
+                <span className="text-xs font-semibold uppercase text-amber-700">
+                  💡 {t("Hint")}{isCoding && <span className="ml-2 font-normal normal-case">{t("(applied to your editor)")}</span>}
+                </span>
+                <div className="flex gap-2">
+                  {preHintCode !== null && isCoding && (
+                    <button
+                      className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-amber-700"
+                      onClick={() => {
+                        setCode(preHintCode);
+                        setPreHintCode(null);
+                      }}
+                    >
+                      ↩ {t("Restore my code")}
+                    </button>
+                  )}
+                  <button className="text-xs text-amber-600 hover:text-amber-800"
+                    onClick={() => { setHint(null); setPreHintCode(null); }}>
+                    ✕ {t("Dismiss")}
+                  </button>
+                </div>
               </div>
               <pre className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-amber-900">{hint}</pre>
             </div>
