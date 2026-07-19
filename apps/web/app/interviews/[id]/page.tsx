@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import type { Execution, InterviewDetail, Message } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
+import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 
 const MonacoEditor = dynamic(
   async () => {
@@ -91,6 +92,55 @@ export default function InterviewRoomPage() {
     useCallback((text: string) => setInput((v) => (v ? `${v} ${text}` : text)), []),
     setError
   );
+
+  // Live voice call (WebRTC to OpenAI Realtime). Transcript lines land in the
+  // chat and are persisted server-side so the Scoring Agent grades them too.
+  const [callState, setCallState] = useState<"idle" | "connecting" | "live">("idle");
+  const callRef = useRef<RealtimeConnection | null>(null);
+  const stageRef = useRef(stage);
+  stageRef.current = stage;
+
+  const addVoiceLine = useCallback(
+    (role: "candidate" | "interviewer", text: string) => {
+      setMessages((m) => [...m, {
+        id: `voice-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        role, content: text, stage: stageRef.current, created_at: new Date().toISOString(),
+      }]);
+      api.addVoiceTranscript(id, role, text).catch(() => undefined);
+    },
+    [id]
+  );
+
+  const toggleCall = useCallback(async () => {
+    if (callRef.current) {
+      callRef.current.stop();
+      callRef.current = null;
+      return;
+    }
+    setError(null);
+    try {
+      callRef.current = await startRealtimeCall(id, {
+        onUserTranscript: (text) => addVoiceLine("candidate", text),
+        onAssistantTranscript: (text) => addVoiceLine("interviewer", text),
+        onToolCall: async (name, args) => {
+          // The voice interviewer drives the stage machine through here.
+          const resp = await api.runVoiceTool(id, name, args);
+          setStage(resp.current_stage);
+          return resp.result;
+        },
+        onStateChange: (s) => {
+          setCallState(s === "closed" ? "idle" : s);
+          if (s === "closed") callRef.current = null;
+        },
+        onError: setError,
+      });
+    } catch (e) {
+      setCallState("idle");
+      setError(e instanceof Error ? e.message : "Voice call failed");
+    }
+  }, [id, addVoiceLine]);
+
+  useEffect(() => () => callRef.current?.stop(), []);
 
   // Draft autosave: restore unsent code/design for this session, then persist
   // every edit so a page refresh never loses work.
@@ -191,6 +241,8 @@ export default function InterviewRoomPage() {
   async function endInterview() {
     if (!window.confirm(t("End the interview and generate your report?"))) return;
     setBusy(true);
+    callRef.current?.stop();
+    callRef.current = null;
     try {
       if (detail?.session.interview_type === "system_design" && design.trim()) {
         await api.sendMessage(id, `Here is my final design summary:\n${design}`, "message");
@@ -221,6 +273,18 @@ export default function InterviewRoomPage() {
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{detail.session.role} · {detail.session.level}</span>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            className={`rounded-full border px-3 py-1 text-xs ${
+              callState === "live"
+                ? "animate-pulse border-red-600 bg-red-50 font-semibold text-red-700"
+                : "border-slate-300 text-slate-500"
+            }`}
+            onClick={toggleCall}
+            disabled={callState === "connecting"}
+            title={t("Talk to the interviewer in a live voice call — everything is transcribed into the chat")}
+          >
+            {callState === "live" ? `📞 ${t("Hang up")}` : callState === "connecting" ? t("Connecting…") : `📞 ${t("Voice call")}`}
+          </button>
           <button
             className={`rounded-full border px-3 py-1 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
             onClick={() => speaker.setEnabled(!speaker.enabled)}

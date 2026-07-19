@@ -164,6 +164,20 @@ cd services/api && .venv/bin/python -m pytest tests -q
 - `MOCK_AI=true` 时两个接口返回固定转写文本和一段静音 WAV，离线/测试可用。
 - 浏览器会请求麦克风权限；`localhost` 下 Chrome/Edge/Safari 均可直接使用。
 
+**📞 实时语音通话**（面试房间顶栏）：像打电话一样和面试官实时对谈。浏览器通过
+WebRTC 直连 OpenAI Realtime API（`gpt-realtime`），后端只签发 10 分钟有效的临时
+密钥（`POST /api/voice/realtime-session`），你的 API key 不会暴露给前端。双方的话
+自动转成字幕：实时显示在聊天面板，并写入 `interview_messages`
+（`POST /api/voice/realtime-transcript`），评分、报告、学习计划照常生成。需要真实
+OpenAI key（`MOCK_AI=false`）；费用约 $0.3~0.5/场。
+
+语音面试官掌控完整的 12 阶段状态机：模型通过 function calling 调用
+`advance_stage`（推进阶段，前端阶段条实时跟随）和 `record_observation`
+（记录私密评估笔记）。工具调用由浏览器转发到
+`POST /api/voice/realtime-tool`；阶段变化和观察以 system 消息落库，
+`internal_observation` 照旧只进 Scoring Agent、绝不出现在任何 API 响应中。
+评分红线不变：语音面试官只面试不打分。
+
 ## 核心闭环（一条链路）
 
 ```

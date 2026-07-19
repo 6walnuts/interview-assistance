@@ -146,4 +146,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ message, mode, topic_slug: topicSlug ?? null }),
     }),
+
+  addVoiceTranscript: (interviewId: string, role: "candidate" | "interviewer", content: string) =>
+    request<Message>("/api/voice/realtime-transcript", {
+      method: "POST",
+      body: JSON.stringify({ interview_id: interviewId, role, content }),
+    }),
+  runVoiceTool: (interviewId: string, name: string, args: Record<string, unknown>) =>
+    request<{ result: Record<string, unknown>; current_stage: string }>("/api/voice/realtime-tool", {
+      method: "POST",
+      body: JSON.stringify({ interview_id: interviewId, name, arguments: args }),
+    }),
 };

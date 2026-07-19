@@ -82,7 +82,9 @@ def get_interview(
     return InterviewDetail(
         session=_session_out(session),
         question=_question_out(session.question) if session.question else None,
-        messages=[_message_out(m) for m in session.messages],
+        # system messages carry interviewer-private notes (voice stage changes,
+        # observations) — never exposed, like internal_observation itself.
+        messages=[_message_out(m) for m in session.messages if m.role != "system"],
     )
 
 

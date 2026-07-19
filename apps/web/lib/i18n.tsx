@@ -103,6 +103,12 @@ const DICT: Record<string, [string, string]> = {
   "Auto-read": ["自动朗读", "Leer en voz alta"],
   "Read the interviewer's replies aloud": ["自动朗读面试官的回复", "Leer en voz alta las respuestas del entrevistador"],
   "Read the coach's replies aloud": ["自动朗读教练的回复", "Leer en voz alta las respuestas del coach"],
+  "Voice call": ["语音通话", "Llamada de voz"],
+  "Hang up": ["挂断", "Colgar"],
+  "Connecting…": ["连接中…", "Conectando…"],
+  "Talk to the interviewer in a live voice call — everything is transcribed into the chat":
+    ["和面试官实时语音对话——内容会自动转成字幕进入聊天记录",
+     "Habla con el entrevistador en una llamada de voz en vivo: todo se transcribe al chat"],
 
   // Practice page
   "Short, targeted sessions — 5, 15 or 30 minutes.":

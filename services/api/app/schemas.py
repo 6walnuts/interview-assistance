@@ -339,3 +339,30 @@ class TranscriptionOut(BaseModel):
 class TTSRequest(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
     voice: str | None = None
+
+
+class RealtimeSessionRequest(BaseModel):
+    interview_id: str
+
+
+class RealtimeSessionOut(BaseModel):
+    client_secret: str
+    model: str
+    expires_at: int | None = None
+
+
+class RealtimeTranscriptIn(BaseModel):
+    interview_id: str
+    role: Literal["candidate", "interviewer"]
+    content: str = Field(min_length=1, max_length=8000)
+
+
+class RealtimeToolIn(BaseModel):
+    interview_id: str
+    name: str = Field(min_length=1, max_length=64)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class RealtimeToolOut(BaseModel):
+    result: dict[str, Any]
+    current_stage: str

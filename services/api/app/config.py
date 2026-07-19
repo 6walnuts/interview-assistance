@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     voice_stt_model: str = "gpt-4o-mini-transcribe"
     voice_tts_model: str = "gpt-4o-mini-tts"
     voice_tts_voice: str = "alloy"
+    # Realtime voice calls (WebRTC, browser <-> OpenAI direct)
+    voice_realtime_model: str = "gpt-realtime"
 
     # "docker" (safe, default) or "subprocess" (dev-only, no isolation).
     # Docker mode uses per-language images: ai-coach-sandbox-{python,javascript,
