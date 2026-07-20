@@ -284,6 +284,7 @@ Give the model answer an excellent candidate would give:
 4. If code makes the answer clearer, put it in code_snippet — never in reply.
 5. Never ask questions back; never evaluate the questioner.
 6. No thanks, farewells, or pleasantries — answer content only.
+7. Never repeat an earlier answer — each turn must add new substance.
 
 Output ONLY JSON: {{"reply": string, "suggested_actions": [], "code_snippet": ""}}
 """
@@ -340,6 +341,9 @@ Give the well-rounded answer a top candidate would give:
    is fair and sharpen the answer — never get defensive.
 5. No thanks, farewells, or pleasantries — answer content only. If the
    interviewer delivers a closing assessment, do not reply to it.
+6. NEVER repeat an earlier answer. If a follow-up retreads ground you
+   already covered, concede that in one clause and add ONLY new specifics:
+   a number, a name, a date, a decision you have not mentioned before.
 
 Output ONLY JSON: {{"reply": string, "suggested_actions": [], "code_snippet": ""}}
 """

@@ -70,6 +70,22 @@ def test_duo_modes_alternate(client, auth_headers):
     assert "[END_OF_DIALOGUE]" in closing.json()["reply"]
 
 
+def test_asker_prompt_gets_server_side_pacing():
+    from app.agents.coach import _build_prompt
+
+    short_history = [{"role": "assistant", "content": "q1"}, {"role": "user", "content": "a1"}]
+    system, _, _ = _build_prompt("a1", "bq_asker", None, None, None, short_history)
+    assert "you have already asked 1 questions" in system
+    assert "closing assessment and MUST end" not in system
+
+    deep_history = [
+        {"role": "assistant" if i % 2 == 0 else "user", "content": f"t{i}"} for i in range(18)
+    ]
+    system, _, _ = _build_prompt("t17", "duo_asker", "caching", None, None, deep_history)
+    assert "closing assessment and MUST end" in system
+    assert "[END_OF_DIALOGUE]" in system
+
+
 def test_bq_duo_modes(client, auth_headers):
     client.put("/api/profile", json={
         "resume_text": "Led a Kafka migration at AcmeCorp; on-call lead for checkout.",

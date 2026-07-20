@@ -78,7 +78,13 @@ export default function DuoPage() {
   const generateTurn = useCallback(async (): Promise<boolean> => {
     if (busyRef.current || finishedRef.current) return false;
     const all = turnsRef.current;
-    if (all.length >= MAX_TURNS) return false;
+    if (all.length >= MAX_TURNS) {
+      finishedRef.current = true;
+      setFinished(true);
+      playingRef.current = false;
+      setPlaying(false);
+      return false;
+    }
     const last = all[all.length - 1];
     const persona: "asker" | "answerer" =
       !last || last.speaker === "answerer" ? "asker" : "answerer";

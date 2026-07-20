@@ -116,6 +116,23 @@ def _build_prompt(
         resume = ((profile.resume_text or "").strip()[:4000] if profile else "") or "(empty)"
         template = BQ_DUO_ASKER_SYSTEM if mode == "bq_asker" else BQ_DUO_ANSWERER_SYSTEM
         base = template.format(level=level, role=role, resume=resume)
+    if mode in ("duo_asker", "bq_asker"):
+        # Models are unreliable at counting their own turns — inject the
+        # count server-side so pacing and termination actually happen.
+        asked = len(history or []) // 2
+        base += (
+            f"\nProgress: you have already asked {asked} questions.\n"
+            "Hard pacing rules: never spend more than 2 consecutive follow-ups "
+            "on the same story — after two, you MUST move to a completely new "
+            "theme or resume item, even if the last answer was still weak "
+            "(note the weakness for your closing assessment instead). "
+        )
+        if asked >= 9:
+            base += (
+                "You have reached the question budget: THIS turn must be the "
+                "closing assessment and MUST end with [END_OF_DIALOGUE]. "
+                "Do not ask another question.\n"
+            )
     else:
         base = COACH_SYSTEM.format(level=level, role=role, mode=mode, topic=topic,
                                    skill_state=json.dumps(skill_state))
