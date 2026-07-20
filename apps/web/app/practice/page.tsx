@@ -12,6 +12,7 @@ const DRILLS = [
   { name: "Flashcards", desc: "Rapid-fire concept cards via the coach.", href: "/learn", time: "5 min" },
   { name: "Mistake Review", desc: "Re-test the mistakes from your last interviews.", href: "/tasks", time: "15 min" },
   { name: "Resume BQ Battle", desc: "Watch an interviewer AI grill a candidate AI on your resume — with model STAR answers.", href: "/duo/bq", time: "15 min" },
+  { name: "CN Canon Drill", desc: "The domestic interview canon: JVM, MySQL, Redis, networking, OS — lessons, quizzes and AI dialogues per topic.", href: "/learn?category=bagu", time: "15 min" },
 ];
 
 export default function PracticePage() {

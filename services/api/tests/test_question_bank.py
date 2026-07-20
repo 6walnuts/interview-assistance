@@ -22,6 +22,17 @@ def test_classic_questions_are_well_formed():
         assert len(q["rubric"]["expected"]) >= 4, q["title"]
 
 
+def test_bagu_category_seeded_with_working_quiz(client, auth_headers):
+    topics = client.get("/api/topics?category=bagu", headers=auth_headers).json()
+    slugs = {t["slug"] for t in topics}
+    assert len(topics) == 10
+    assert {"mysql", "redis", "jvm", "computer-network", "operating-system"} <= slugs
+
+    quiz = client.get("/api/quiz/mysql?count=3", headers=auth_headers)
+    assert quiz.status_code == 200, quiz.text
+    assert len(quiz.json()["questions"]) == 3
+
+
 def test_seeded_bank_serves_system_design_interviews(client, auth_headers):
     # A system-design interview must come back with a question from the bank.
     resp = client.post("/api/interviews", json={
