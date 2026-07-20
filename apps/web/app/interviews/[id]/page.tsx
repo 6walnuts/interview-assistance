@@ -211,18 +211,21 @@ export default function InterviewRoomPage() {
       setInput("");
       const isCodingRoom = detail?.session.interview_type === "coding";
       try {
-        // Hint requests carry the editor contents so the hint builds on the
-        // candidate's own code rather than a generic skeleton.
-        const codeForHint = action === "request_hint" && isCodingRoom ? code : "";
-        const resp = await api.sendMessage(id, content, action, codeForHint);
+        // Hint requests carry the editor/whiteboard contents so the hint
+        // builds on the candidate's own work rather than a generic skeleton.
+        const boardForHint = action === "request_hint" ? (isCodingRoom ? code : design) : "";
+        const resp = await api.sendMessage(id, content, action, boardForHint);
         setMessages((m) => [...m, resp.message]);
         setStage(resp.current_stage);
         if (resp.hint_content) {
           setHint(resp.hint_content);
+          // Apply the hint directly to the editor/whiteboard with a revert point.
           if (isCodingRoom) {
-            // Apply the hint directly to the editor, keeping a revert point.
             setPreHintCode(code);
             setCode(resp.hint_content);
+          } else {
+            setPreHintCode(design);
+            setDesign(resp.hint_content);
           }
         }
         // Hints are always read aloud — the reply to the hint button is the
@@ -234,7 +237,7 @@ export default function InterviewRoomPage() {
         setBusy(false);
       }
     },
-    [busy, id, stage, code, detail, speaker.enabled, speaker.speak]
+    [busy, id, stage, code, design, detail, speaker.enabled, speaker.speak]
   );
 
   const activeLang = editorLang ?? detail?.session.language ?? "python";
@@ -406,14 +409,15 @@ export default function InterviewRoomPage() {
             <div className="border-b border-amber-200 bg-amber-50 p-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase text-amber-700">
-                  💡 {t("Hint")}{isCoding && <span className="ml-2 font-normal normal-case">{t("(applied to your editor)")}</span>}
+                  💡 {t("Hint")}<span className="ml-2 font-normal normal-case">{isCoding ? t("(applied to your editor)") : t("(applied to your whiteboard)")}</span>
                 </span>
                 <div className="flex gap-2">
-                  {preHintCode !== null && isCoding && (
+                  {preHintCode !== null && (
                     <button
                       className="rounded bg-amber-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-amber-700"
                       onClick={() => {
-                        setCode(preHintCode);
+                        if (isCoding) setCode(preHintCode);
+                        else setDesign(preHintCode);
                         setPreHintCode(null);
                       }}
                     >

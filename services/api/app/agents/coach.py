@@ -66,9 +66,14 @@ def _mock_reply(mode: str, topic: str, message: str = "", hist_len: int = 0) -> 
                   "late instead of 3 weeks — the lesson was to cut scope earlier.",
         )
     if mode == "duo_answerer":
+        # Whiteboard grows deterministically with dialogue depth.
+        n = hist_len // 2 + 1
+        board = "\n".join(["[client] -> [api]"] +
+                          [f"[api] -> [component-{i}]" for i in range(1, n + 1)])
         return CoachReply(
             reply=f"(mock answerer) Model answer on {topic}: the mechanism works like X, "
                   f"the tradeoff interviewers listen for is Y, and a concrete example is Z.",
+            code_snippet=board,
         )
     snippet = ""
     if "hint" in message.lower():

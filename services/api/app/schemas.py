@@ -125,6 +125,14 @@ class QuestionSummary(BaseModel):
     category: str
     difficulty: str
     prompt_preview: str
+    custom: bool = False
+
+
+class CustomQuestionCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=200)
+    prompt: str = Field(min_length=10, max_length=8000)
+    interview_type: InterviewType = "system_design"
+    difficulty: Difficulty = "medium"
 
 
 class QuestionOut(BaseModel):
