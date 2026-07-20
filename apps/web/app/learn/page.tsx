@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
 import type { QuestionSummary, Topic } from "@/lib/types";
@@ -17,6 +18,7 @@ const CATEGORIES = [
   { id: "infrastructure", name: "Infrastructure" },
   { id: "ai_infrastructure", name: "AI Infrastructure" },
   { id: "machine_learning", name: "Machine Learning" },
+  { id: "bagu", name: "CN Interview Canon" },
 ];
 
 type ChatMsg = { role: "user" | "coach"; text: string };
@@ -24,8 +26,17 @@ type ChatMsg = { role: "user" | "coach"; text: string };
 const CHATS_KEY = "aic_coach_chats";
 
 export default function LearnPage() {
+  return (
+    <Suspense>
+      <LearnContent />
+    </Suspense>
+  );
+}
+
+function LearnContent() {
   const { t: tr } = useI18n();
-  const [category, setCategory] = useState("coding");
+  const params = useSearchParams();
+  const [category, setCategory] = useState(params.get("category") ?? "coding");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selected, setSelected] = useState<Topic | null>(null);
   // Chat history is kept per topic slug so switching topics never loses it.

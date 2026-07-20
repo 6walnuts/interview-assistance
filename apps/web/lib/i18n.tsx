@@ -173,6 +173,11 @@ const DICT: Record<string, [string, string]> = {
   "Infrastructure": ["基础设施", "Infraestructura"],
   "AI Infrastructure": ["AI 基础设施", "Infraestructura de IA"],
   "Machine Learning": ["机器学习", "Machine Learning"],
+  "CN Interview Canon": ["八股文", "Canon de entrevistas CN"],
+  "CN Canon Drill": ["八股特训", "Entrenamiento del canon CN"],
+  "The domestic interview canon: JVM, MySQL, Redis, networking, OS — lessons, quizzes and AI dialogues per topic.":
+    ["国内面试八股主干：JVM、MySQL、Redis、网络、操作系统——每个知识点都有辅导课、章节测试和 AI 问答观摩。",
+     "El canon de entrevistas doméstico: JVM, MySQL, Redis, redes, SO — lecciones, quizzes y diálogos de IA por tema."],
   "Lesson →": ["辅导课 →", "Lección →"],
   "Tutor": ["辅导老师", "Tutor"],
   "Tutor is thinking…": ["老师思考中…", "El tutor está pensando…"],

@@ -43,6 +43,17 @@ TOPICS: list[dict] = [
     # ai infrastructure
     {"slug": "llm-serving", "name": "LLM Serving & KV Cache", "category": "ai_infrastructure", "difficulty": 4},
     {"slug": "rag-systems", "name": "RAG Systems", "category": "ai_infrastructure", "difficulty": 3},
+    # 八股文 (CN interview canon: the rote-knowledge backbone of domestic backend interviews)
+    {"slug": "java-basics", "name": "Java 基础与集合", "category": "bagu", "difficulty": 2},
+    {"slug": "java-concurrency", "name": "Java 并发", "category": "bagu", "difficulty": 3},
+    {"slug": "jvm", "name": "JVM 原理", "category": "bagu", "difficulty": 3},
+    {"slug": "spring", "name": "Spring 全家桶", "category": "bagu", "difficulty": 2},
+    {"slug": "mysql", "name": "MySQL", "category": "bagu", "difficulty": 2},
+    {"slug": "redis", "name": "Redis", "category": "bagu", "difficulty": 2},
+    {"slug": "computer-network", "name": "计算机网络", "category": "bagu", "difficulty": 2},
+    {"slug": "operating-system", "name": "操作系统", "category": "bagu", "difficulty": 2},
+    {"slug": "distributed-systems", "name": "分布式与高并发", "category": "bagu", "difficulty": 3},
+    {"slug": "mq", "name": "消息队列", "category": "bagu", "difficulty": 2},
     # machine learning (domain knowledge: theory & algorithms, vs. ai_infrastructure's engineering)
     {"slug": "ml-fundamentals", "name": "Bias-Variance & Overfitting", "category": "machine_learning", "difficulty": 2},
     {"slug": "supervised-learning", "name": "Supervised Learning Models", "category": "machine_learning", "difficulty": 2},
@@ -150,6 +161,35 @@ QUIZ: list[dict] = [
      "answer_index": 1,
      "explanation": "A large train/validation gap signals high variance (overfitting); regularization, "
                     "dropout, early stopping or more data narrow the gap."},
+    {"topic_slug": "mysql",
+     "question": "InnoDB 的普通二级索引查询 `select * from t where name='x'` 通常需要回表，"
+                 "以下哪种手段最直接地避免回表？",
+     "options": ["把 name 列改成主键", "对查询列建立覆盖索引（联合索引包含所需列）",
+                 "增大 buffer pool", "改用哈希索引"],
+     "answer_index": 1,
+     "explanation": "覆盖索引让二级索引本身就包含查询所需的全部列，服务器无需回聚簇索引取整行，"
+                    "这是最常用的避免回表手段。"},
+    {"topic_slug": "redis",
+     "question": "Redis 同时开启 RDB 和 AOF 时，重启后以哪份数据恢复？为什么？",
+     "options": ["RDB，因为快照更完整", "AOF，因为它通常拥有更完整的最近写入",
+                 "两者合并恢复", "取决于文件哪个更大"],
+     "answer_index": 1,
+     "explanation": "AOF 记录每条写命令、丢数据窗口更小，所以两者并存时 Redis 优先用 AOF 恢复；"
+                    "RDB 只作为兜底快照。"},
+    {"topic_slug": "computer-network",
+     "question": "TCP 挥手后主动关闭方进入 TIME_WAIT 等待 2MSL，最主要是为了什么？",
+     "options": ["节省服务器端口", "确保最后一个 ACK 丢失时能重发，并让旧连接的报文在网络中消亡",
+                 "给应用层时间清理缓冲区", "防止 SYN 洪泛攻击"],
+     "answer_index": 1,
+     "explanation": "2MSL 等待既保证对端未收到最后 ACK 时的 FIN 重传还能得到响应，"
+                    "也确保本连接的旧报文全部过期，不会串入使用相同四元组的新连接。"},
+    {"topic_slug": "java-concurrency",
+     "question": "volatile 能保证可见性和有序性，但不能保证原子性。下面哪个场景用 volatile 就足够？",
+     "options": ["多线程对同一计数器做 i++", "一个线程写状态标志位、其他线程读它退出循环",
+                 "实现无锁队列的出入队", "多线程更新共享的 HashMap"],
+     "answer_index": 1,
+     "explanation": "状态标志位是单写多读、且写操作本身是单次赋值，volatile 的可见性保证足够；"
+                    "复合操作（读-改-写）仍需要锁或 CAS。"},
     {"topic_slug": "transformers",
      "question": "In self-attention, why is the dot product of queries and keys divided by sqrt(d_k)?",
      "options": ["To keep the sequence length constant", "To normalize the value vectors",
