@@ -26,6 +26,11 @@ export default function DuoPage() {
   const isBQ = slug === "bq";
   const [topic, setTopic] = useState<Topic | null>(null);
   const [hasResume, setHasResume] = useState<boolean | null>(null);
+  // Target JD: gap-analysis fuel for the BQ interviewer.
+  const [jd, setJd] = useState("");
+  const [showJd, setShowJd] = useState(false);
+  const [jdSaved, setJdSaved] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [finished, setFinished] = useState(false);
   const finishedRef = useRef(false);
@@ -48,7 +53,10 @@ export default function DuoPage() {
   useEffect(() => {
     if (isBQ) {
       api.getProfile()
-        .then(({ profile }) => setHasResume(Boolean(profile.resume_text?.trim())))
+        .then(({ profile }) => {
+          setHasResume(Boolean(profile.resume_text?.trim()));
+          setJd(profile.target_jd ?? "");
+        })
         .catch(() => setHasResume(null));
       return;
     }
@@ -161,6 +169,57 @@ export default function DuoPage() {
     void playLoop();
   }
 
+  async function saveJd() {
+    try {
+      await api.updateProfile({ target_jd: jd });
+      setJdSaved(true);
+      setTimeout(() => setJdSaved(false), 2000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save JD");
+    }
+  }
+
+  function dialogueTitle(): string {
+    const date = new Date().toISOString().slice(0, 10);
+    return isBQ ? `Resume BQ Battle — ${date}` : `AI Q&A — ${topic?.name ?? slug} — ${date}`;
+  }
+
+  function toMarkdown(): string {
+    const lines = [`# ${dialogueTitle()}`, ""];
+    for (const turn of turnsRef.current) {
+      lines.push(`**${roleLabel[turn.speaker].replace(/^[^\s]+\s/, "")}**:`, "", turn.text, "");
+    }
+    return lines.join("\n");
+  }
+
+  function exportMarkdown() {
+    const blob = new Blob([toMarkdown()], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${isBQ ? "bq-battle" : `duo-${slug}`}-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function favorite() {
+    try {
+      const all = JSON.parse(localStorage.getItem("aic_saved_duos") ?? "[]") as unknown[];
+      all.unshift({
+        id: `${Date.now()}`,
+        title: dialogueTitle(),
+        kind: isBQ ? "bq" : slug,
+        savedAt: new Date().toISOString(),
+        turns: turnsRef.current,
+      });
+      localStorage.setItem("aic_saved_duos", JSON.stringify(all.slice(0, 50)));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    }
+  }
+
   function restart() {
     playingRef.current = false;
     setPlaying(false);
@@ -202,11 +261,33 @@ export default function DuoPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {turns.length > 0 && (
+            <>
+              <button className="btn-secondary !py-1 text-xs" onClick={favorite}
+                title={t("Save this dialogue to your favorites")}>
+                {saved ? `✅ ${t("Saved")}` : `⭐ ${t("Favorite")}`}
+              </button>
+              <button className="btn-secondary !py-1 text-xs" onClick={exportMarkdown}
+                title={t("Download this dialogue as Markdown")}>
+                ⬇️ {t("Export")}
+              </button>
+            </>
+          )}
+          <Link href="/saved" className="btn-secondary !py-1 text-xs">🗂 {t("Favorites")}</Link>
           {isBQ && (
-            <ResumeUpload
-              onExtract={() => setHasResume(true)}
-              onError={setError}
-            />
+            <>
+              <button
+                className={`rounded-full border px-3 py-1 text-xs ${jd.trim() ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
+                onClick={() => setShowJd((v) => !v)}
+                title={t("Paste the target job description — the interviewer attacks the resume-JD gaps")}
+              >
+                🎯 JD
+              </button>
+              <ResumeUpload
+                onExtract={() => setHasResume(true)}
+                onError={setError}
+              />
+            </>
           )}
           <button
             className={`rounded-full border px-3 py-1 text-xs ${speaker.enabled ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-300 text-slate-500"}`}
@@ -233,6 +314,22 @@ export default function DuoPage() {
 
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-4">
         <div className="flex-1 space-y-3 overflow-y-auto py-4">
+          {isBQ && showJd && (
+            <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-500">
+                🎯 {t("Target job description (the interviewer will attack the resume-JD gaps)")}
+              </p>
+              <textarea
+                className="input mt-2 h-24 resize-none text-sm"
+                placeholder={t("Paste the JD here…")}
+                value={jd}
+                onChange={(e) => setJd(e.target.value)}
+              />
+              <button className="btn-primary mt-2 !py-1 text-xs" onClick={() => void saveJd()}>
+                {jdSaved ? `✅ ${t("Saved")}` : t("Save JD")}
+              </button>
+            </div>
+          )}
           {isBQ && hasResume === false && (
             <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
               <span>

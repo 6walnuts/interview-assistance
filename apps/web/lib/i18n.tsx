@@ -111,6 +111,28 @@ const DICT: Record<string, [string, string]> = {
   "Restart": ["重新开始", "Reiniciar"],
   "Next turn": ["下一轮", "Siguiente turno"],
   "Dialogue finished": ["对话已结束", "Diálogo terminado"],
+  "Favorite": ["收藏", "Favorito"],
+  "Favorites": ["收藏夹", "Favoritos"],
+  "Saved": ["已收藏", "Guardado"],
+  "Export": ["导出", "Exportar"],
+  "Save this dialogue to your favorites": ["把这段对话存入收藏夹", "Guardar este diálogo en favoritos"],
+  "Download this dialogue as Markdown": ["把这段对话导出为 Markdown", "Descargar este diálogo como Markdown"],
+  "Saved dialogues": ["收藏的对话", "Diálogos guardados"],
+  "Nothing saved yet — favorite a dialogue from the AI Q&A or Resume BQ Battle pages.":
+    ["还没有收藏——在 AI 问答或简历 BQ 对抗页点“收藏”即可存档。",
+     "Aún no hay nada guardado: marca un diálogo como favorito desde las páginas de P&R o del duelo de BQ."],
+  "turns": ["轮", "turnos"],
+  "View": ["查看", "Ver"],
+  "Collapse": ["收起", "Plegar"],
+  "Delete": ["删除", "Eliminar"],
+  "Save JD": ["保存 JD", "Guardar JD"],
+  "Paste the JD here…": ["把职位描述粘贴到这里…", "Pega aquí la descripción del puesto…"],
+  "Target job description (the interviewer will attack the resume-JD gaps)":
+    ["目标职位描述（面试官会针对简历与 JD 的差距发难）",
+     "Descripción del puesto objetivo (la entrevistadora atacará las brechas currículum-JD)"],
+  "Paste the target job description — the interviewer attacks the resume-JD gaps":
+    ["粘贴目标 JD——面试官会针对简历与 JD 的差距发难",
+     "Pega la descripción del puesto: la entrevistadora ataca las brechas currículum-JD"],
   "Read the dialogue aloud with two voices": ["用两种音色朗读对话", "Leer el diálogo con dos voces"],
   "Two AIs quiz each other from basics to depth — press Play, then sit back and learn. You can jump in with your own question anytime.":
     ["两个 AI 围绕这个知识点由浅入深互相问答——点“播放”后坐着学就行，随时可以插入你自己的问题。",

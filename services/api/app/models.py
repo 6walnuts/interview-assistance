@@ -60,6 +60,8 @@ class UserProfile(Base, TimestampMixin):
     strengths: Mapped[list] = mapped_column(JSON, default=list)
     weaknesses: Mapped[list] = mapped_column(JSON, default=list)
     resume_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Target job description: gap analysis for BQ battles and planning.
+    target_jd: Mapped[str | None] = mapped_column(Text, nullable=True)
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped[User] = relationship(back_populates="profile")

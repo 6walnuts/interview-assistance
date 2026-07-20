@@ -29,6 +29,7 @@ export interface Profile {
   weaknesses: string[];
   onboarding_completed: boolean;
   resume_text: string;
+  target_jd: string;
 }
 
 export interface QuestionSummary {
