@@ -1,5 +1,7 @@
 # AI Interview Coach
 
+**中文** | [English](README.en.md) | [Español](README.es.md)
+
 一个面向 SDE / Backend / Infra / AI Infra 候选人的 **AI 面试教练平台**。不是一次性模拟面试工具，而是完整闭环：
 
 ```
