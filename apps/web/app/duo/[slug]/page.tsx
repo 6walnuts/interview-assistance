@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
@@ -20,8 +20,20 @@ const VOICES: Record<Speaker, string> = { asker: "echo", answerer: "coral", user
 const HISTORY_SENT = 16;
 
 export default function DuoPage() {
+  return (
+    <Suspense>
+      <DuoSession />
+    </Suspense>
+  );
+}
+
+function DuoSession() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
+  const search = useSearchParams();
+  // Optional anchor: run the dialogue around one specific bank question.
+  const questionId = search.get("question_id");
+  const questionTitle = search.get("title");
   // Special variant: /duo/bq = resume-grounded behavioral sparring match.
   const isBQ = slug === "bq";
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -32,6 +44,8 @@ export default function DuoPage() {
   const [jdSaved, setJdSaved] = useState(false);
   const [saved, setSaved] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
+  // Cumulative design whiteboard maintained by the answerer (topic mode).
+  const [board, setBoard] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
   const finishedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
@@ -118,8 +132,10 @@ export default function DuoPage() {
           streamed += delta;
           const partial = streamed;
           setTurns([...all, { speaker: persona, text: partial }]);
-        }
+        },
+        questionId
       );
+      if (persona === "answerer" && resp.code_snippet) setBoard(resp.code_snippet);
       // Termination: explicit end marker from the asker, or (safety net) the
       // two sides starting to echo each other's farewell lines verbatim.
       const ended = resp.reply.includes(END_MARKER);
@@ -146,7 +162,7 @@ export default function DuoPage() {
       busyRef.current = false;
       setBusy(false);
     }
-  }, [slug, isBQ, historyFor]);
+  }, [slug, isBQ, questionId, historyFor]);
 
   const playLoop = useCallback(async () => {
     while (playingRef.current && turnsRef.current.length < MAX_TURNS) {
@@ -189,6 +205,9 @@ export default function DuoPage() {
     for (const turn of turnsRef.current) {
       lines.push(`**${roleLabel[turn.speaker].replace(/^[^\s]+\s/, "")}**:`, "", turn.text, "");
     }
+    if (board) {
+      lines.push("## Whiteboard", "", "```", board, "```", "");
+    }
     return lines.join("\n");
   }
 
@@ -226,6 +245,7 @@ export default function DuoPage() {
     speaker.stop();
     finishedRef.current = false;
     setFinished(false);
+    setBoard(null);
     setTurns([]);
   }
 
@@ -259,6 +279,12 @@ export default function DuoPage() {
           <span className="font-semibold text-brand-700">
             {isBQ ? `⚔️ ${t("Resume BQ Battle")}` : `🎭 ${t("AI × AI Q&A")}${topic ? ` — ${topic.name}` : ""}`}
           </span>
+          {questionTitle && (
+            <span className="max-w-xs truncate rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700"
+              title={questionTitle}>
+              📌 {questionTitle}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {turns.length > 0 && (
@@ -312,7 +338,8 @@ export default function DuoPage() {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-4">
+      <div className={`mx-auto flex w-full flex-1 flex-col overflow-hidden px-4 ${board ? "max-w-6xl flex-row gap-4" : "max-w-3xl"}`}>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="flex-1 space-y-3 overflow-y-auto py-4">
           {isBQ && showJd && (
             <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
@@ -373,6 +400,16 @@ export default function DuoPage() {
             ⏭ {t("Next turn")}
           </button>
         </div>
+      </div>
+
+      {board && (
+        <div className="my-4 flex w-2/5 min-w-[280px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <p className="border-b border-slate-100 px-3 py-2 text-xs font-semibold text-slate-500">
+            🧊 {t("Whiteboard (evolves with the dialogue)")}
+          </p>
+          <pre className="flex-1 overflow-auto p-3 font-mono text-xs leading-relaxed text-slate-800">{board}</pre>
+        </div>
+      )}
       </div>
     </div>
   );

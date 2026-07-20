@@ -39,6 +39,7 @@ export interface QuestionSummary {
   category: string;
   difficulty: string;
   prompt_preview: string;
+  custom: boolean;
 }
 
 export interface Topic {

@@ -27,6 +27,33 @@ export default function QuestionsPage() {
   const [difficulty, setDifficulty] = useState("");
   const [category, setCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Custom question form
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newPrompt, setNewPrompt] = useState("");
+  const [newType, setNewType] = useState("system_design");
+  const [newDifficulty, setNewDifficulty] = useState("medium");
+  const [creating, setCreating] = useState(false);
+
+  async function createCustom() {
+    if (newTitle.trim().length < 3 || newPrompt.trim().length < 10) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const q = await api.createCustomQuestion({
+        title: newTitle, prompt: newPrompt,
+        interview_type: newType, difficulty: newDifficulty,
+      });
+      setQuestions((all) => [q, ...all]);
+      setShowCreate(false);
+      setNewTitle("");
+      setNewPrompt("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   useEffect(() => {
     api.listQuestions({ interview_type: type || undefined, difficulty: difficulty || undefined })
@@ -41,9 +68,38 @@ export default function QuestionsPage() {
     <AppShell>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("Question bank")}</h1>
-        <span className="text-sm text-slate-500">{visible.length} {t("questions_count")}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-500">{visible.length} {t("questions_count")}</span>
+          <button className="btn-primary !py-1.5 text-sm" onClick={() => setShowCreate((v) => !v)}>
+            ➕ {t("Custom question")}
+          </button>
+        </div>
       </div>
       {error && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+
+      {showCreate && (
+        <div className="card mt-4">
+          <p className="text-sm font-semibold text-slate-700">{t("Write your own question")}</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <input className="input sm:col-span-2" placeholder={t("Question title")}
+              value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <select className="input" value={newType} onChange={(e) => setNewType(e.target.value)}>
+              <option value="system_design">{t("System Design")}</option>
+              <option value="coding">{t("Coding")}</option>
+            </select>
+            <select className="input" value={newDifficulty} onChange={(e) => setNewDifficulty(e.target.value)}>
+              {["easy", "medium", "hard"].map((d) => <option key={d} value={d}>{t(d)}</option>)}
+            </select>
+            <textarea className="input h-28 resize-none sm:col-span-2"
+              placeholder={t("Describe the question: scenario, requirements, constraints…")}
+              value={newPrompt} onChange={(e) => setNewPrompt(e.target.value)} />
+          </div>
+          <button className="btn-primary mt-3" disabled={creating || newTitle.trim().length < 3 || newPrompt.trim().length < 10}
+            onClick={() => void createCustom()}>
+            {creating ? t("Saving…") : t("Create question")}
+          </button>
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {TYPES.map((ty) => (
@@ -89,15 +145,32 @@ export default function QuestionsPage() {
                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
                   {q.interview_type === "coding" ? t("Coding") : t("System Design")}
                 </span>
+                {q.custom && (
+                  <span className="rounded bg-violet-50 px-1.5 py-0.5 text-xs text-violet-700">{t("custom")}</span>
+                )}
               </div>
               <p className="mt-1 text-sm text-slate-600">{q.prompt_preview}</p>
             </div>
-            <Link
-              className="btn-primary shrink-0 !py-1.5 text-center text-sm"
-              href={`/interviews/new?question_id=${q.id}&type=${q.interview_type}&title=${encodeURIComponent(q.title)}`}
-            >
-              {t("Interview with this question")}
-            </Link>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              <Link
+                className="btn-primary !py-1 text-center text-xs"
+                href={`/interviews/new?question_id=${q.id}&type=${q.interview_type}&title=${encodeURIComponent(q.title)}`}
+              >
+                {t("Interview with this question")}
+              </Link>
+              <Link
+                className="rounded-lg bg-green-50 px-3 py-1 text-center text-xs font-medium text-green-700 hover:bg-green-100"
+                href={`/tutor/${q.category}?question_id=${q.id}&title=${encodeURIComponent(q.title)}`}
+              >
+                {t("Learn with this question")}
+              </Link>
+              <Link
+                className="rounded-lg bg-violet-50 px-3 py-1 text-center text-xs font-medium text-violet-700 hover:bg-violet-100"
+                href={`/duo/${q.category}?question_id=${q.id}&title=${encodeURIComponent(q.title)}`}
+              >
+                🎭 {t("Watch AI × AI Q&A")}
+              </Link>
+            </div>
           </div>
         ))}
       </div>

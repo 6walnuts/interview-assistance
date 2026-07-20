@@ -50,6 +50,44 @@ def test_interview_with_explicit_question(client, auth_headers):
     assert bad.status_code == 422
 
 
+def test_custom_question_create_and_use(client, auth_headers):
+    created = client.post("/api/questions/custom", json={
+        "title": "Design my company's internal feature-flag service",
+        "prompt": "We run 40 microservices and need per-tenant feature flags with "
+                  "instant rollout and kill switches. Design the service.",
+    }, headers=auth_headers)
+    assert created.status_code == 201, created.text
+    q = created.json()
+    assert q["custom"] is True and q["category"] == "custom"
+
+    # Listed in the bank with the custom flag.
+    listed = client.get("/api/questions?category=custom", headers=auth_headers).json()
+    assert any(item["id"] == q["id"] for item in listed)
+
+    # Usable for an explicit-question interview.
+    interview = client.post("/api/interviews", json={
+        "interview_type": "system_design", "role": "Backend Engineer", "level": "senior",
+        "company_style": "general", "duration_minutes": 45, "difficulty": "medium",
+        "language": "python", "focus_areas": [], "question_id": q["id"],
+    }, headers=auth_headers)
+    assert interview.status_code == 201, interview.text
+    assert interview.json()["question"]["id"] == q["id"]
+
+    # Usable as a lesson/duo anchor.
+    lesson = client.post("/api/coach/chat", json={
+        "message": "Start the lesson.", "mode": "lesson", "question_id": q["id"],
+    }, headers=auth_headers)
+    assert lesson.status_code == 200
+
+
+def test_duo_answerer_mock_maintains_whiteboard(client, auth_headers):
+    resp = client.post("/api/coach/chat", json={
+        "message": "q1", "mode": "duo_answerer", "topic_slug": "caching",
+        "history": [{"role": "user", "content": "q1"}],
+    }, headers=auth_headers).json()
+    assert "[client] -> [api]" in resp["code_snippet"]
+
+
 def test_coach_stream_emits_deltas_then_done(client, auth_headers):
     resp = client.post("/api/coach/chat/stream", json={
         "message": "Teach me the first concept.", "mode": "lesson",

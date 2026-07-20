@@ -113,6 +113,17 @@ export const api = {
   completeTask: (taskId: string) =>
     request<Task>(`/api/tasks/${taskId}/complete`, { method: "POST" }),
 
+  createCustomQuestion: (q: {
+    title: string;
+    prompt: string;
+    interview_type?: string;
+    difficulty?: string;
+  }) =>
+    request<QuestionSummary>("/api/questions/custom", {
+      method: "POST",
+      body: JSON.stringify(q),
+    }),
+
   listQuestions: (filters: { interview_type?: string; category?: string; difficulty?: string } = {}) => {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);

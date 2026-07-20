@@ -126,6 +126,14 @@ const DICT: Record<string, [string, string]> = {
   "Collapse": ["收起", "Plegar"],
   "Delete": ["删除", "Eliminar"],
   "Save JD": ["保存 JD", "Guardar JD"],
+  "Whiteboard (evolves with the dialogue)": ["白板（随对话演进）", "Pizarra (evoluciona con el diálogo)"],
+  "Custom question": ["自定义题目", "Pregunta personalizada"],
+  "Write your own question": ["自己出一道题", "Escribe tu propia pregunta"],
+  "Question title": ["题目标题", "Título de la pregunta"],
+  "Describe the question: scenario, requirements, constraints…":
+    ["描述题目：场景、需求、约束条件…", "Describe la pregunta: escenario, requisitos, restricciones…"],
+  "Create question": ["创建题目", "Crear pregunta"],
+  "custom": ["自定义", "personalizada"],
   "Paste the JD here…": ["把职位描述粘贴到这里…", "Pega aquí la descripción del puesto…"],
   "Target job description (the interviewer will attack the resume-JD gaps)":
     ["目标职位描述（面试官会针对简历与 JD 的差距发难）",
@@ -178,6 +186,7 @@ const DICT: Record<string, [string, string]> = {
   "Hint": ["提示", "Pista"],
   "Dismiss": ["关闭", "Cerrar"],
   "(applied to your editor)": ["（已应用到编辑器）", "(aplicada a tu editor)"],
+  "(applied to your whiteboard)": ["（已应用到白板）", "(aplicada a tu pizarra)"],
   "Restore my code": ["还原我的代码", "Restaurar mi código"],
   "Insert into editor": ["插入编辑器", "Insertar en el editor"],
   "Ask for a hint on the current exercise": ["就当前练习要一个提示", "Pide una pista sobre el ejercicio actual"],

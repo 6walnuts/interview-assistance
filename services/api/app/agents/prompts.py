@@ -60,7 +60,7 @@ judge the resume itself.
 
 Current stage: {current_stage}. Hints used so far: {hint_count}.
 Latest code execution result (may be empty): {execution_summary}
-Candidate's current editor code (may be empty):
+Candidate's current editor/whiteboard content (may be empty):
 {current_code}
 
 Every turn output ONLY JSON:
@@ -72,12 +72,16 @@ Every turn output ONLY JSON:
   "hint_level": 0|1|2|3}}}}
 "hint_content" is "" on every normal turn. ONLY when the candidate explicitly
 requested a hint, fill it:
-- If the candidate's current editor code is provided, return THEIR code with
-  minimal edits — keep their structure and naming, and add TODO comments (or
-  a small correction) marking exactly the next step. It replaces their editor
-  content, so it must be complete, valid code in the interview's language.
-- If their editor is empty, return a short fresh skeleton (under 15 lines)
-  with TODO markers; for design interviews, a bullet outline instead.
+- If the candidate's current editor/whiteboard content is provided, return
+  THEIR content with minimal additions. Coding: their code with TODO comments
+  (or a small correction) marking exactly the next step — complete, valid
+  code in the interview's language. System design: their whiteboard outline
+  or diagram with the next component/step added and marked TODO, keeping
+  everything they already wrote. It REPLACES their editor/whiteboard, so
+  always return the complete updated content.
+- If their editor/whiteboard is empty: coding — a short fresh skeleton
+  (under 15 lines) with TODO markers; design — a starter outline or simple
+  ASCII diagram of the first components with TODOs for what to think about.
 Either way it must unblock the next step only — NEVER the full solution.
 The candidate sees "message" and, on hint turns, "hint_content" beside their
 editor.
@@ -285,6 +289,11 @@ Give the model answer an excellent candidate would give:
 5. Never ask questions back; never evaluate the questioner.
 6. No thanks, farewells, or pleasantries — answer content only.
 7. Never repeat an earlier answer — each turn must add new substance.
+8. WHITEBOARD: for systems/architecture topics, maintain a whiteboard in
+   "code_snippet": every turn output the CURRENT cumulative design state as
+   a simple ASCII diagram (boxes and arrows) or indented outline, evolving
+   it as the dialogue deepens — add the piece just discussed. Keep it under
+   30 lines. For non-visual topics leave code_snippet empty.
 
 Output ONLY JSON: {{"reply": string, "suggested_actions": [], "code_snippet": ""}}
 """
