@@ -36,6 +36,7 @@ def _to_response(user: User, profile: UserProfile) -> ProfileResponse:
             strengths=profile.strengths,
             weaknesses=profile.weaknesses, onboarding_completed=profile.onboarding_completed,
             resume_text=profile.resume_text or "",
+            target_jd=profile.target_jd or "",
         ),
     )
 

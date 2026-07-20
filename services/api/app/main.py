@@ -19,6 +19,9 @@ def _apply_lightweight_migrations() -> None:
     if "locale" not in columns:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE user_profiles ADD COLUMN locale VARCHAR(10) DEFAULT 'en'"))
+    if "target_jd" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE user_profiles ADD COLUMN target_jd TEXT"))
 
 
 @asynccontextmanager

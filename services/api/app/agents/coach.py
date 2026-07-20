@@ -114,8 +114,9 @@ def _build_prompt(
         base = DUO_ANSWERER_SYSTEM.format(level=level, role=role, topic=topic)
     elif mode in ("bq_asker", "bq_answerer"):
         resume = ((profile.resume_text or "").strip()[:4000] if profile else "") or "(empty)"
+        jd = ((profile.target_jd or "").strip()[:3000] if profile else "") or "(empty)"
         template = BQ_DUO_ASKER_SYSTEM if mode == "bq_asker" else BQ_DUO_ANSWERER_SYSTEM
-        base = template.format(level=level, role=role, resume=resume)
+        base = template.format(level=level, role=role, resume=resume, jd=jd)
     if mode in ("duo_asker", "bq_asker"):
         # Models are unreliable at counting their own turns — inject the
         # count server-side so pacing and termination actually happen.

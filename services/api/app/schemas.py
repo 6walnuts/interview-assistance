@@ -46,6 +46,7 @@ class ProfileUpdate(BaseModel):
     strengths: list[str] | None = None
     weaknesses: list[str] | None = None
     resume_text: str | None = None
+    target_jd: str | None = None
     onboarding_completed: bool | None = None
 
 
@@ -62,6 +63,7 @@ class ProfileOut(BaseModel):
     weaknesses: list[str]
     onboarding_completed: bool
     resume_text: str = ""
+    target_jd: str = ""
 
 
 class ProfileResponse(BaseModel):

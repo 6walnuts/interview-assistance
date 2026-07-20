@@ -70,6 +70,23 @@ def test_duo_modes_alternate(client, auth_headers):
     assert "[END_OF_DIALOGUE]" in closing.json()["reply"]
 
 
+def test_bq_prompts_include_target_jd(client, auth_headers):
+    resp = client.put("/api/profile", json={
+        "target_jd": "Requires distributed systems experience and Kafka at scale.",
+    }, headers=auth_headers)
+    assert resp.status_code == 200
+    assert "Kafka at scale" in resp.json()["profile"]["target_jd"]
+
+    from app.agents.coach import _build_prompt
+    from app.models import UserProfile
+
+    profile = UserProfile(user_id="u", resume_text="Built a monolith at AcmeCorp.",
+                          target_jd="Requires distributed systems experience.")
+    system, _, _ = _build_prompt("[Begin]", "bq_asker", None, profile, None, [])
+    assert "Requires distributed systems experience." in system
+    assert "gap" in system.lower()
+
+
 def test_asker_prompt_gets_server_side_pacing():
     from app.agents.coach import _build_prompt
 
