@@ -9,6 +9,7 @@ import type { QuestionSummary, Topic } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import SpeedSelect from "@/components/SpeedSelect";
+import Markdown from "@/components/Markdown";
 
 const CATEGORIES = [
   { id: "coding", name: "Coding" },
@@ -220,8 +221,8 @@ function LearnContent() {
               </p>
             )}
             {chat.map((m, i) => (
-              <div key={i} className={`max-w-[90%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${m.role === "coach" ? "bg-slate-100" : "ml-auto bg-brand-50"}`}>
-                {m.text}
+              <div key={i} className={`max-w-[90%] rounded-xl px-3 py-2 text-sm ${m.role === "coach" ? "bg-slate-100" : "ml-auto bg-brand-50"}`}>
+                <Markdown text={m.text} />
               </div>
             ))}
             {busy && <p className="text-xs text-slate-400">{tr("Coach is thinking…")}</p>}

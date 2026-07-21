@@ -10,6 +10,7 @@ import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 import SpeedSelect from "@/components/SpeedSelect";
 import CodeEditor from "@/components/CodeEditor";
+import Markdown from "@/components/Markdown";
 
 const MonacoEditor = CodeEditor;
 
@@ -252,9 +253,9 @@ function TutorLesson() {
         <div className="flex w-1/2 flex-col border-r border-slate-200 bg-white">
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {chat.map((m, i) => (
-              <div key={i} className={`max-w-[90%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${
+              <div key={i} className={`max-w-[90%] rounded-xl px-3 py-2 text-sm ${
                 m.role === "coach" ? "bg-slate-100" : "ml-auto bg-brand-50"}`}>
-                {m.text}
+                <Markdown text={m.text} />
               </div>
             ))}
             {busy && <p className="text-xs text-slate-400">{t("Tutor is thinking…")}</p>}

@@ -9,6 +9,7 @@ import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 import SpeedSelect from "@/components/SpeedSelect";
 import CodeEditor from "@/components/CodeEditor";
+import Markdown from "@/components/Markdown";
 
 const MonacoEditor = CodeEditor;
 
@@ -341,12 +342,12 @@ export default function InterviewRoomPage() {
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map((m) => (
-              <div key={m.id} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
+              <div key={m.id} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
                 m.role === "interviewer" ? "bg-slate-100" : "ml-auto bg-brand-50"}`}>
                 <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">
                   {m.role === "interviewer" ? t("Interviewer") : t("You")}
                 </p>
-                {m.content}
+                <Markdown text={m.content} />
               </div>
             ))}
             {busy && <p className="text-xs text-slate-400">{t("Interviewer is typing…")}</p>}

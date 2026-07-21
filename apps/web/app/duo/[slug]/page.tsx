@@ -9,6 +9,7 @@ import { useI18n } from "@/lib/i18n";
 import { useSpeaker } from "@/lib/voice";
 import SpeedSelect from "@/components/SpeedSelect";
 import ResumeUpload from "@/components/ResumeUpload";
+import Markdown from "@/components/Markdown";
 
 type Speaker = "asker" | "answerer" | "user";
 type Turn = { speaker: Speaker; text: string };
@@ -376,7 +377,7 @@ function DuoSession() {
           {turns.map((turn, i) => (
             <div key={i} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${roleStyle[turn.speaker]}`}>
               <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">{roleLabel[turn.speaker]}</p>
-              <span className="whitespace-pre-wrap">{turn.text}</span>
+              <Markdown text={turn.text} />
             </div>
           ))}
           {busy && <p className="text-xs text-slate-400">…</p>}
