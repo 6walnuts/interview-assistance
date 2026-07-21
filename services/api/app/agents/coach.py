@@ -11,6 +11,8 @@ from .prompts import (
     COACH_SYSTEM,
     DUO_ANSWERER_SYSTEM,
     DUO_ASKER_SYSTEM,
+    DUO_SD_ANSWERER_SYSTEM,
+    DUO_SD_ASKER_SYSTEM,
     TUTOR_SYSTEM,
     language_instruction,
 )
@@ -92,6 +94,14 @@ def _mock_reply(mode: str, topic: str, message: str = "", hist_len: int = 0) -> 
     )
 
 
+def _is_design_context(question: Question | None, topic_category: str | None) -> bool:
+    """Design-interview style duos: anchored on a system_design question, or
+    running on a topic from the system-design category."""
+    if question is not None and question.interview_type == "system_design":
+        return True
+    return topic_category == "system_design"
+
+
 def _build_prompt(
     message: str,
     mode: str,
@@ -100,6 +110,7 @@ def _build_prompt(
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None,
     question: Question | None = None,
+    topic_category: str | None = None,
 ) -> tuple[str, list[dict[str, str]], str]:
     topic = topic_slug or "general interview preparation"
     skill_state = (
@@ -114,9 +125,13 @@ def _build_prompt(
         base = TUTOR_SYSTEM.format(level=level, role=role, topic=topic,
                                    skill_state=json.dumps(skill_state))
     elif mode == "duo_asker":
-        base = DUO_ASKER_SYSTEM.format(level=level, role=role, topic=topic)
+        template = (DUO_SD_ASKER_SYSTEM if _is_design_context(question, topic_category)
+                    else DUO_ASKER_SYSTEM)
+        base = template.format(level=level, role=role, topic=topic)
     elif mode == "duo_answerer":
-        base = DUO_ANSWERER_SYSTEM.format(level=level, role=role, topic=topic)
+        template = (DUO_SD_ANSWERER_SYSTEM if _is_design_context(question, topic_category)
+                    else DUO_ANSWERER_SYSTEM)
+        base = template.format(level=level, role=role, topic=topic)
     elif mode in ("bq_asker", "bq_answerer"):
         resume = ((profile.resume_text or "").strip()[:4000] if profile else "") or "(empty)"
         jd = ((profile.target_jd or "").strip()[:3000] if profile else "") or "(empty)"
@@ -162,9 +177,10 @@ def chat(
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None = None,
     question: Question | None = None,
+    topic_category: str | None = None,
 ) -> CoachReply:
     system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
-                                            history, question)
+                                            history, question, topic_category)
     n = len(history or [])
     return _hoist_code(complete_json(system, messages, CoachReply,
                                      lambda: _mock_reply(mode, topic, message, n)))
@@ -178,10 +194,11 @@ def chat_stream(
     skill: UserSkillProfile | None,
     history: list[dict[str, str]] | None = None,
     question: Question | None = None,
+    topic_category: str | None = None,
 ):
     """Yields ("delta", text) chunks then ("final", CoachReply)."""
     system, messages, topic = _build_prompt(message, mode, topic_slug, profile, skill,
-                                            history, question)
+                                            history, question, topic_category)
     n = len(history or [])
     for kind, payload in stream_reply(system, messages, CoachReply,
                                       lambda: _mock_reply(mode, topic, message, n)):

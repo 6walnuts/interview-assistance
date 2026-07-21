@@ -87,6 +87,34 @@ def test_bq_prompts_include_target_jd(client, auth_headers):
     assert "gap" in system.lower()
 
 
+def test_design_duos_use_the_design_interviewer_prompt(client, auth_headers):
+    from app.agents.coach import _build_prompt
+    from app.models import Question
+
+    # Anchored on a system_design question -> design-interview asker.
+    q = Question(interview_type="system_design", category="caching", difficulty="medium",
+                 title="Design a URL Shortener", prompt="...", examples=[], constraints=[],
+                 test_cases=[], rubric={"expected": ["capacity estimation"]})
+    system, _, _ = _build_prompt("[Begin]", "duo_asker", "caching", None, None, [], q)
+    assert "SYSTEM DESIGN interview" in system
+    assert "scale estimation" in system
+
+    # Topic from the system_design category -> same, even without an anchor.
+    system, _, _ = _build_prompt("[Begin]", "duo_asker", "sharding", None, None, [],
+                                 None, "system_design")
+    assert "SYSTEM DESIGN interview" in system
+
+    # Concept topics keep the Socratic questioner.
+    system, _, _ = _build_prompt("[Begin]", "duo_asker", "mysql", None, None, [], None, "bagu")
+    assert "Socratic" in system
+
+    # End-to-end: a duo turn on a system_design-category topic still works.
+    resp = client.post("/api/coach/chat", json={
+        "message": "[Begin the dialogue]", "mode": "duo_asker", "topic_slug": "sharding",
+    }, headers=auth_headers)
+    assert resp.status_code == 200, resp.text
+
+
 def test_asker_prompt_gets_server_side_pacing():
     from app.agents.coach import _build_prompt
 
