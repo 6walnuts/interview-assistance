@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import Markdown from "@/components/Markdown";
 import { useI18n } from "@/lib/i18n";
 
 type SavedTurn = { speaker: "asker" | "answerer" | "user"; text: string };
@@ -83,8 +84,8 @@ export default function SavedPage() {
             {openId === item.id && (
               <div className="mt-3 max-h-96 space-y-2 overflow-y-auto border-t border-slate-100 pt-3">
                 {item.turns.map((turn, i) => (
-                  <div key={i} className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${roleStyle[turn.speaker]}`}>
-                    {turn.text}
+                  <div key={i} className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${roleStyle[turn.speaker]}`}>
+                    <Markdown text={turn.text} />
                   </div>
                 ))}
               </div>
