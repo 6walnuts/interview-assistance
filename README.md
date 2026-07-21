@@ -99,6 +99,7 @@ LOCAL_MODE=true SANDBOX_MODE=subprocess .venv/bin/uvicorn app.main:app --reload 
 | `psycopg2.OperationalError: connection ... port 5432 failed` | `.env` 里 `DATABASE_URL` 指向了没在跑的 Postgres | 改成 `DATABASE_URL=sqlite:///./dev.db`（或删掉该行用默认值） |
 | `command not found: python3.12` | Homebrew 装好了但不在 PATH | 用全路径 `/opt/homebrew/bin/python3.12`（Intel Mac 为 `/usr/local/bin/python3.12`） |
 | 前端报 `502` + 余额/配额提示 | LLM 供应商账户没充值或 key 无效 | 按提示充值，或换 `LLM_PROVIDER` |
+| `ChunkLoadError`（`/_next/undefined`）或 "xxx is not a function"（明明已 pull 新代码） | Next.js 构建缓存新旧混杂 | 停掉前端 → `rm -rf .next node_modules/.cache` → 重启 → 浏览器硬刷新（Cmd+Shift+R） |
 
 **单机免密码模式**：个人本地使用可跳过注册登录，所有存档记在一个本地账号下：
 
