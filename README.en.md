@@ -102,6 +102,7 @@ LOCAL_MODE=true SANDBOX_MODE=subprocess .venv/bin/uvicorn app.main:app --reload 
 | `psycopg2.OperationalError: connection ... port 5432 failed` | `DATABASE_URL` in `.env` points at a Postgres that isn't running | Change to `DATABASE_URL=sqlite:///./dev.db` (or delete the line for the default) |
 | `command not found: python3.12` | Homebrew installed it but it's not on PATH | Use the full path `/opt/homebrew/bin/python3.12` (Intel Mac: `/usr/local/bin/python3.12`) |
 | Frontend shows `502` + quota/balance message | LLM provider account has no credit or the key is invalid | Top up as prompted, or switch `LLM_PROVIDER` |
+| `ChunkLoadError` (`/_next/undefined`) or "xxx is not a function" right after pulling updates | Stale/mixed Next.js build cache | Stop the frontend → `rm -rf .next node_modules/.cache` → restart → hard-refresh the browser (Cmd+Shift+R) |
 
 **Single-user passwordless mode**: for personal local use you can skip
 registration/login; everything is saved under one local account:
