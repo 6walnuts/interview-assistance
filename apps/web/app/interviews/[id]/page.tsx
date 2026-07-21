@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
@@ -9,19 +8,9 @@ import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 import SpeedSelect from "@/components/SpeedSelect";
+import CodeEditor from "@/components/CodeEditor";
 
-const MonacoEditor = dynamic(
-  async () => {
-    const { loader, default: Editor } = await import("@monaco-editor/react");
-    // Self-hosted Monaco assets (copied to public/ by scripts/copy-monaco.mjs)
-    // instead of the default CDN, so the editor works offline / behind proxies.
-    // The origin must be absolute: language workers (e.g. tsWorker for JS)
-    // fetch from inside a Worker where a bare "/monaco/vs" path cannot resolve.
-    loader.config({ paths: { vs: `${window.location.origin}/monaco/vs` } });
-    return Editor;
-  },
-  { ssr: false }
-);
+const MonacoEditor = CodeEditor;
 
 const STAGES = [
   "introduction", "question_presentation", "clarification", "approach", "deep_dive",

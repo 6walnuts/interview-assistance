@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -10,17 +9,9 @@ import { useI18n } from "@/lib/i18n";
 import { useSpeaker, useVoiceInput } from "@/lib/voice";
 import { startRealtimeCall, type RealtimeConnection } from "@/lib/realtime";
 import SpeedSelect from "@/components/SpeedSelect";
+import CodeEditor from "@/components/CodeEditor";
 
-const MonacoEditor = dynamic(
-  async () => {
-    const { loader, default: Editor } = await import("@monaco-editor/react");
-    // Absolute origin so Monaco's language workers can fetch their modules
-    // from inside a Worker context (see interview room editor).
-    loader.config({ paths: { vs: `${window.location.origin}/monaco/vs` } });
-    return Editor;
-  },
-  { ssr: false }
-);
+const MonacoEditor = CodeEditor;
 
 const LANGUAGES: Record<string, { label: string; monaco: string; starter: string }> = {
   python: { label: "Python", monaco: "python", starter: "# Try the exercise here\n" },

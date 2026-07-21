@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ChunkErrorRecovery from "@/components/ChunkErrorRecovery";
 import { LanguageProvider } from "@/lib/i18n";
 import "./globals.css";
 
@@ -11,6 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <ChunkErrorRecovery />
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
