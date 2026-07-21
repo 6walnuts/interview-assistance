@@ -18,24 +18,26 @@ router = APIRouter(prefix="/api/coach", tags=["coach"])
 def _chat_context(body: CoachChatRequest, user: User, db: Session):
     profile = db.scalars(select(UserProfile).where(UserProfile.user_id == user.id)).first()
     skill = None
+    topic_category = None
     if body.topic_slug:
         topic = db.scalars(select(LearningTopic).where(LearningTopic.slug == body.topic_slug)).first()
         if topic:
+            topic_category = topic.category
             skill = db.scalars(select(UserSkillProfile).where(
                 UserSkillProfile.user_id == user.id, UserSkillProfile.topic_id == topic.id,
             )).first()
     history = [{"role": t.role, "content": t.content} for t in body.history]
     question = db.get(Question, body.question_id) if body.question_id else None
-    return profile, skill, history, question
+    return profile, skill, history, question, topic_category
 
 
 @router.post("/chat", response_model=CoachChatResponse)
 def chat(
     body: CoachChatRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> CoachChatResponse:
-    profile, skill, history, question = _chat_context(body, user, db)
+    profile, skill, history, question, topic_category = _chat_context(body, user, db)
     reply = coach_agent.chat(body.message, body.mode, body.topic_slug, profile, skill,
-                             history=history, question=question)
+                             history=history, question=question, topic_category=topic_category)
     return CoachChatResponse(reply=reply.reply, suggested_actions=reply.suggested_actions,
                              code_snippet=reply.code_snippet)
 
@@ -46,13 +48,13 @@ def chat_stream(
 ) -> StreamingResponse:
     """SSE variant: `data: {"delta": ...}` chunks of the reply as it streams,
     then a final `data: {"done": true, ...}` event with the full payload."""
-    profile, skill, history, question = _chat_context(body, user, db)
+    profile, skill, history, question, topic_category = _chat_context(body, user, db)
 
     def events():
         try:
             for kind, payload in coach_agent.chat_stream(
                 body.message, body.mode, body.topic_slug, profile, skill, history=history,
-                question=question,
+                question=question, topic_category=topic_category,
             ):
                 if kind == "delta":
                     yield f"data: {json.dumps({'delta': payload})}\n\n"
